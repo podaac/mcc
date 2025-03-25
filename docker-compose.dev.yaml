@@ -1,0 +1,16 @@
+version: "3.7"
+services:
+  mcc:
+    privileged: true
+    image: $DOCKER_REPO/podaac/mcc:$VERSION
+    environment:
+      - PYTHONUNBUFFERED=1
+    ports:
+      - 8999:80
+    volumes:
+      - /home/podaacdev/mcc/tmp:/tmp/mcc
+      - /home/podaacdev/mcc/logs:/var/log/httpd
+      - /home/podaacdev/mcc/latest/env:/home/mcc/env
+    container_name: mcc-$VERSION
+    command: apachectl -D FOREGROUND
+    restart: always

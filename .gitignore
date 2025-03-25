@@ -1,0 +1,28 @@
+# Visual Studio Core related files
+.vscode
+.DS_Store
+.idea
+
+# Python compiler cache
+**/__pycache__
+*.pyc
+
+# Log files
+**/log_*.*
+**/*.log
+**/reports/**
+json.output
+
+# Local testdata
+.env
+**/tempdata/**
+
+# Terraform
+*.terraform*
+*.tfplan
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pytest
+pytest.ini

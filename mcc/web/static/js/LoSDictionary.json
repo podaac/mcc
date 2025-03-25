@@ -1,0 +1,633 @@
+{
+	"comment": "Not sure why we need the 'stable operations / robust system' section since it's all '1's",
+	"indices": ["level 0", "level 1", "level 2", "level 3", "level 4"],
+	"legend": ["Not Available", "Default (nominal)", "Requires extra integration", "Needs Discussion"],
+	"sections": [{
+			"title": "Science, Information, Data, Parameters and Disciplines",
+			"services": [{
+					"service": "Data set information page and access",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Coincident and synergistic data recommendations",
+					"NetCDF": [0, 0, 2, 2, 2],
+					"HDF4": [0, 0, 2, 2, 2],
+					"HDF5": [0, 0, 2, 2, 2],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Ocean stories, animations, and visuals",
+					"NetCDF": [0, 0, 3, 3, 3],
+					"HDF4": [0, 0, 3, 3, 3],
+					"HDF5": [0, 0, 3, 3, 3],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Well defined and carefully controlled data set rollout process",
+					"NetCDF": [0, 0, 2, 2, 2],
+					"HDF4": [0, 0, 2, 2, 2],
+					"HDF5": [0, 0, 2, 2, 2],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Dataset / Granule discovery",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				}
+			]
+		},
+		{
+			"title": "Metadata and Standards",
+			"services": [{
+					"service": "Data model definition, taxonomies, etc.",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Data format recommendations (Standards conformance:  HDF, CF, ISO-19115, ACDD)",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Metadata translation (e.g., to ISO-19115, ISO-8601, GCMD, CMR)",
+					"NetCDF": [0, 1, 1, 1, 1],
+					"HDF4": [0, 1, 1, 1, 1],
+					"HDF5": [0, 1, 1, 1, 1],
+					"ASCII": [0, 1, 1, 1, 1],
+					"Binary": [0, 1, 1, 1, 1]
+				},
+				{
+					"service": "MCC (Metadata Compliance Checker)",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				}
+			]
+		},
+
+		{
+			"title": "Capabilities",
+			"services": [{
+					"service": "Event driven process for users (published/subscribe)",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Web services",
+					"NetCDF": [0, 0, 2, 2, 2],
+					"HDF4": [0, 0, 2, 2, 2],
+					"HDF5": [0, 0, 2, 2, 2],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "FTP access",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "HTTP access",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "OPeNDAP",
+					"NetCDF": [0, 1, 1, 1, 1],
+					"HDF4": [0, 1, 1, 1, 1],
+					"HDF5": [0, 1, 1, 1, 1],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "LAS",
+					"NetCDF": [0, 0, 0, 2, 2],
+					"HDF4": [0, 0, 0, 2, 2],
+					"HDF5": [0, 0, 0, 2, 2],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "THREDDS",
+					"NetCDF": [0, 0, 0, 2, 2],
+					"HDF4": [0, 0, 0, 2, 2],
+					"HDF5": [0, 0, 0, 2, 2],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "SOTO",
+					"NetCDF": [0, 0, 2, 2, 2],
+					"HDF4": [0, 0, 2, 2, 2],
+					"HDF5": [0, 0, 2, 2, 2],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "HiTIDE",
+					"NetCDF": [0, 0, 2, 0, 0],
+					"HDF4": [0, 0, 2, 0, 0],
+					"HDF5": [0, 0, 2, 0, 0],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Giovanni",
+					"NetCDF": [0, 0, 0, 2, 2],
+					"HDF4": [0, 0, 0, 2, 2],
+					"HDF5": [0, 0, 0, 2, 2],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Webification (w10n)",
+					"NetCDF": [0, 0, 1, 1, 1],
+					"HDF4": [0, 0, 1, 1, 1],
+					"HDF5": [0, 0, 1, 1, 1],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Ancillary file distribution (documentation, software, configuration files, etc.)",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+
+				{
+					"service": "Dataset and granule aggregation",
+					"NetCDF": [0, 0, 2, 2, 2],
+					"HDF4": [0, 0, 2, 2, 2],
+					"HDF5": [0, 0, 2, 2, 2],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Dataset and granule subsetting",
+					"NetCDF": [0, 0, 2, 2, 2],
+					"HDF4": [0, 0, 2, 2, 2],
+					"HDF5": [0, 0, 2, 2, 2],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Data visualization and distribution (e.g., via GIRI, GIBS pipeline, delivery to GIBS, etc.)",
+					"NetCDF": [0, 0, 2, 2, 2],
+					"HDF4": [0, 0, 2, 2, 2],
+					"HDF5": [0, 0, 2, 2, 2],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Near real-time view of data",
+					"NetCDF": [0, 0, 2, 2, 2],
+					"HDF4": [0, 0, 2, 2, 2],
+					"HDF5": [0, 0, 2, 2, 2],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Processing sandbox / CAPRI",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+
+				}
+			]
+		},
+		{
+			"title": "Stakeholders Support (projects, institutions and organizations)",
+			"services": [{
+					"service": "Missions, projects, in-situ, PI lead support capabilities",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Data Management planning",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Domestic and international projects, instruments, and team support",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Government, (military or agency), academic, and private interface support",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Secure access/configurable visibility",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Interface Control and Optimization (ICD, data handler/crawler developments/optimizations, and automated ingest prioritization)",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Promote project, Dataset, and data set usage",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Marketing and exposure including GCMD and CMR",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Metrics to project on consumption, views, etc.",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Metrics to NASA",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Test support to the project, including project readiness testing milestones",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Support project milestones such as PDR, CDR, etc.",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Various distribution models such as pass-through, rolling store, long-term archive",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Support latency requirements",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Mission and dataset retirement planning",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Support long-term archive requirements for Dataset and mission information",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Cal/Val Support",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "ITAR, IP, data and information protection",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "IT security (Active scans, audits, patching, etc.)",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Access to PO.DAAC technical staff",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Access to data engineers and software team",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Dedicated user services team",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Direct assistance with meeting NASA preservation requirements",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Mission page",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				}
+			]
+		},
+		{
+			"title": "Stable Operations / Robust System",
+			"services": [{
+					"service": "High maturity IT and business practices",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Response to requirements at both the system-level via IT, and process/ops level via BP (system and process customization)",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Use case and requirements based testing",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "User Acceptance testing",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Automated testing / high-coverage testing",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Backend metadata re-harvesting",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Active monitoring and troubleshooting of operational flows and interfaces",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "'Dimmed light' operations, through system monitoring and automation.",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Robust, high-availability infrastructure",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Closely managed, high fidelity development and test environments, with clear separation",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Configuration management process for systems, both software and hardware",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Read-only access for high percentage of servers and systems, controlling system and data quality and integrity",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Clear separation of duties between development and OPS, which forces knowledge transfer and improves operational robustness",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Ops-support points of contact",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Data protection and preservation via local and off-site backup",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Active infrastructure refresh to keep up with technology gains",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				}
+			]
+		},
+		{
+			"title": "Community Support and Engagement",
+			"services": [{
+					"service": "Direct tie in to the community",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "User outreach and support",
+					"NetCDF": [0, 1, 1, 1, 1],
+					"HDF4": [0, 1, 1, 1, 1],
+					"HDF5": [0, 1, 1, 1, 1],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Forum capability (for dataset discussions, recipes, troubleshooting and community discussions)",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "User guide/support documentation on both Dataset and Data standards and toolkits and third party tools",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "DOI's",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Software distribution, Including algorithms, processing software, readers, etc.",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Help desk and issue resolution",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				},
+				{
+					"service": "Access to project documentation",
+					"NetCDF": [1, 1, 1, 1, 1],
+					"HDF4": [1, 1, 1, 1, 1],
+					"HDF5": [1, 1, 1, 1, 1],
+					"ASCII": [1, 1, 1, 1, 1],
+					"Binary": [1, 1, 1, 1, 1]
+				},
+				{
+					"service": "Collaboration support through view and configuration sharing (e.g., SOTO Shared-URL)",
+					"NetCDF": [0, 0, 1, 1, 1],
+					"HDF4": [0, 0, 1, 1, 1],
+					"HDF5": [0, 0, 1, 1, 1],
+					"ASCII": [0, 0, 0, 0, 0],
+					"Binary": [0, 0, 0, 0, 0]
+				}
+			]
+		}
+	]
+}

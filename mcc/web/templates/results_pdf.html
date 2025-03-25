@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Google Tag Manager -->
+    <!-- DISABLE TAG
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+              new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-WNP7MLF');</script>
+    DISABLE TAG -->
+    <!-- End Google Tag Manager -->
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ fn }} Check</title>
+
+    <link rel="stylesheet" type="text/css" href="{{ homepage_url }}/{{ print_styles_css_path }}" media="print">
+
+    {% from '_macros.html' import compute_list_classes, compute_summary_description, create_list_group %}
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <!-- Google Tag Manager (noscript) -->
+  <!-- DISABLE TAG
+  <noscript><iframe src=https://www.googletagmanager.com/ns.html?id=GTM-WNP7MLF
+                    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  DISABLE TAG -->
+  <!-- End Google Tag Manager (noscript) -->
+  <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+
+          <div class="row text-center">
+            <h5>MCC v{{ mcc_version }}</h5>
+            <h1>Results for {{ fn }}</h1>
+
+            <ul class="list-inline">
+              <li>md5 {{ hash }}</li>
+              <li>{{ size }}</li>
+              <li>{{ model }}</li>
+            </ul>
+          </div>
+
+          <hr />
+
+          <div class="row">
+            {% for check_results in results %} {# a checker suite #}
+            <div class="col-md-12" id="{{ check_results.short_name }}">
+              <div class="page-header">
+                <h1>
+                  {{ check_results.short_name }}-{{ selected_checkers.get(check_results.short_name + '-version') or selected_checkers.get(check_results.short_name + '-parameter') }} Check
+                  {{ compute_summary_description(None, check_results.passed, check_results.total) }}
+                </h1>
+              </div>
+
+              {% for results_group in check_results.results %} {# top level results group #}
+              <h2 class="{{ compute_list_classes(results_group.priority, results_group.passed, results_group.total) }}">
+                {# @TODO: display_name is not used anymore and is undocumented... #}
+                {{ results_group.get('display_name', results_group.name) }}
+                {{ compute_summary_description(results_group.priority, results_group.passed, results_group.total) }}
+              </h2>
+
+              <ul class="list-group">
+                {{ create_list_group(results_group.results) }}
+              </ul>
+              {% endfor %}
+            </div>
+           {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

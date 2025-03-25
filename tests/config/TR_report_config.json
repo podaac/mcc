@@ -1,0 +1,32 @@
+{
+    "SuiteName": {
+        "23941": "{TestSuiteName} {Custom_Text}",
+        "23942": "{TestSuiteName} {Custom_Text}"
+    },
+    "ComponentVersionsToShowInReport": {
+        "23941": [
+            "MCC_API",
+            "Environment",
+            "Test_Framework",
+            "Jenkins_Build"
+        ],
+        "23942": [
+            "Browser",
+            "Environment",
+            "Test_Framework",
+            "Jenkins_Build"
+        ]
+    },
+    "VersionToUseInTestSuiteName": {
+        "23941": "",
+        "23942": ""
+    },
+    "ComponentVersions": [
+        "Environment",
+        "Browser",
+        "MCC_API",
+        "Test_Framework",
+        "Jenkins_Build",
+        "Custom_Text"
+    ]
+}

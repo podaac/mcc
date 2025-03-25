@@ -1,0 +1,68 @@
+{% macro compute_list_classes(priority, passed, total) -%}
+  {%- if priority == 'optional' -%}
+    list-group-item list-group-item-info
+  {%- else -%}
+    {%- if total - passed == 0 -%} list-group-item list-group-item-success
+    {%- elif passed == 0 -%} list-group-item list-group-item-danger
+    {%- else -%} list-group-item list-group-item-warning
+    {%- endif -%}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro _create_result_block(result, short_print) -%}
+  {% if result.priority == 'required' %}
+    {% if result.passed %}
+    <li class="list-group-item list-group-item-success">
+    {% else %}
+    <li class="list-group-item list-group-item-danger">
+    {% endif %}
+  {% elif result.priority == 'optional' %}
+  <li class="list-group-item list-group-item-info">
+  {% endif %}
+  {#- We get the value of result by implicitly calling Result.__str__() -#}
+  <li><h4>{{ "✓" if result.passed else "✗" }} {{ result }}</h4></li>
+  <ul>
+  {%- if not short_print -%}
+    {%- if result.description -%}
+    <li><b>Description:</b> {{ result.description }}</li>
+    {%- endif -%}
+  {%- endif -%}
+  {%- if result.value is not none -%}
+  <li><b>Value:</b> {{ result.value }}</li>
+  {%- endif -%}
+  </ul>
+{%- endmacro %}
+
+{% macro compute_summary_description(priority, passed, total) -%}
+  {%- if total - passed == 0 -%}<small>all {{ total }} passed</small>
+  {%- elif passed == 0 -%}<small>all {{ total }} failed</small>
+  {%- else -%}<small>{{ passed }} out of {{ total }} passed</small>
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro create_list_group(results) -%}
+  {%- for result in results -%}
+    {%- if result is mapping and result.name %}
+    <li class="{{ compute_list_classes(result.priority, result.passed, result.total) }}">
+      {% if result.results %}<h3 data-toggle="collapse" data-target="#{{ result.hash }}">
+      {% else %}<h3>
+      {% endif %}
+      {% if result.results %}<span class="glyphicon glyphicon-chevron-down"></span>{% endif %}
+      {#- IOOS checker adds "§" to the beginning of test names -#}
+      {{ result.name|replace("§", "") }} {{ compute_summary_description(result.priority, result.passed, result.total) }}
+      </h3>
+      {#- result.message printing is only used by the cf checker at the moment -#}
+      {% if result.message %}<pre>{{ result.message|replace("<", "")|replace(">", "")|safe }}</pre>{% endif %}
+      {#- recursive printing magic -#}
+      {% if result.results %}<ul class="list-group collapse" id="{{ result.hash }}">{{ create_list_group(result.results) }}</ul>{% endif %}
+    </li>
+    {% else %}
+      {% if loop.index >= loop.length %}
+        {{ _create_result_block(result, false) }}
+      {% else %}
+        {% set next_element_same_checker = results[loop.index].name == result.name %}
+        {{ _create_result_block(result, next_element_same_checker) }}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{%- endmacro %}

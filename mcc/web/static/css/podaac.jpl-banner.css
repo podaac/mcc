@@ -1,0 +1,188 @@
+/**
+ * JPL Banner Typography
+ */
+#JPL-banner {
+  font-family: Arial, sans-serif;
+  color: #fff;
+  margin-top: 10px;
+}
+#JPL-banner a {
+  color: #fff;
+  text-decoration: none;
+}
+#JPL-banner ul,
+#JPL-banner li {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/**
+ * JPL Home Links
+ */
+#JPL-home {
+  position: relative;
+  float: left;
+  width: 300px;
+}
+#JPL-home-link,
+#JPL-caltech-link {
+  float: left;
+  padding-left: 80px;
+}
+#JPL-home-link {
+  font-size: 18px;
+  margin-top: 20px;
+}
+#JPL-caltech-link {
+  font-size: 14px;
+}
+
+
+/**
+ * JPL Links
+ */
+#JPL-link-container {
+  float: right;
+  margin-top: 5px;
+}
+#JPL-links,
+#JPL-icon-container {
+  float: right;
+  clear: right;
+}
+#JPL-links li {
+  float: left;
+  margin-left: 15px;
+  font-size: 9px;
+  text-transform: uppercase;
+}
+#JPL-icon-slogan {
+  font-size: 11px;
+  text-transform: uppercase;
+}
+#JPL-icon-slogan,
+#JPL-icons {
+  float: left;
+}
+#JPL-icons li {
+  display: inline;
+}
+
+/** IE 7 Fixes **/
+.lt-ie8 #JPL-icons {
+  width: 250px;
+  float: right;
+}
+.lt-ie8 #JPL-icon-container {
+  width: 410px;
+}
+/**
+ * JPL Sprite Styles
+ */
+#JPL-NASA-link,
+.jpl-icon {
+  background-image: url('../images/jpl-sprite@x1.png');
+  background-repeat: no-repeat;
+  -webkit-background-size: 170px 80px;
+  -moz-background-size: 170px 80px;
+  -o-background-size: 170px 80px;
+  background-size: 170px 80px;
+}
+#JPL-NASA-link {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 70px;
+  height: 70px;
+  background-position: -101px 0;
+}
+#JPL-icons .jpl-icon {
+  float: left;
+  width: 20px;
+  height: 20px;
+  margin-left: 5px;
+  overflow: hidden;
+}
+a.jpl-email-news-icon { background-position: 0 0; }
+a.jpl-email-news-icon:hover,
+a.jpl-email-news-icon:active { background-position: 0 -20px; }
+a.jpl-facebook-icon { background-position: -20px 0; }
+a.jpl-facebook-icon:hover,
+a.jpl-facebook-icon:active { background-position: -20px -20px; }
+a.jpl-twitter-icon { background-position: -40px 0; }
+a.jpl-twitter-icon:hover,
+a.jpl-twitter-icon:active { background-position: -40px -20px; }
+a.jpl-gplus-icon { background-position: -60px 0; }
+a.jpl-gplus-icon:hover,
+a.jpl-gplus-icon:active { background-position: -60px -20px; }
+a.jpl-youtube-icon { background-position: -80px 0; }
+a.jpl-youtube-icon:hover,
+a.jpl-youtube-icon:active { background-position: -80px -20px; }
+a.jpl-itunes-icon { background-position: 0 -40px; }
+a.jpl-itunes-icon:hover,
+a.jpl-itunes-icon:active { background-position: 0 -60px; }
+a.jpl-ustream-icon { background-position: -20px -40px; }
+a.jpl-ustream-icon:hover,
+a.jpl-ustream-icon:active { background-position: -20px -60px; }
+a.jpl-rss-icon { background-position: -40px -40px; }
+a.jpl-rss-icon:hover,
+a.jpl-rss-icon:active { background-position: -40px -60px; }
+a.jpl-blog-icon { background-position: -60px -40px; }
+a.jpl-blog-icon:hover,
+a.jpl-blog-icon:active { background-position: -60px -60px; }
+a.jpl-mobile-icon { background-position: -80px -40px; }
+a.jpl-mobile-icon:hover,
+a.jpl-mobile-icon:active { background-position: -80px -60px; }
+
+/**
+ * Media Queries
+ */
+
+/* 2 pixel ratio */
+@media  
+only screen and (-webkit-min-device-pixel-ratio: 2),  
+only screen and ( min--moz-device-pixel-ratio: 2),  
+only screen and ( -o-min-device-pixel-ratio: 2/1),  
+only screen and ( min-device-pixel-ratio: 2),  
+only screen and ( min-resolution: 192dpi),  
+only screen and ( min-resolution: 2dppx) {
+  .podaac-backgroundsize #JPL-NASA-link,
+  .podaac-backgroundsize .jpl-icon {
+    background-image: url('../images/jpl-sprite@x2.png');
+  }
+}  
+
+/* 3 pixel ratio */
+@media  
+only screen and (-webkit-min-device-pixel-ratio: 3),
+only screen and ( min--moz-device-pixel-ratio: 3),
+only screen and ( -o-min-device-pixel-ratio: 3/1),
+only screen and ( min-device-pixel-ratio: 3),
+only screen and ( min-resolution: 288dpi),
+only screen and ( min-resolution: 3dppx) {
+  .podaac-backgroundsize #JPL-NASA-link,
+  .podaac-backgroundsize .jpl-icon {
+    background-image: url('../images/jpl-sprite@x3.png');
+  }
+}
+
+@media all and (max-width: 750px) {
+  #JPL-link-container {
+    float: left;
+    clear: left;
+    margin-top: 15px;
+  }
+  #JPL-links,
+  #JPL-icon-container {
+    float: left;
+    clear: left;
+  }
+  #JPL-links li {
+    margin-left: 0;
+    margin-right: 15px;
+  }
+  #JPL-icons a {
+    margin-left: 5px;
+  }
+}

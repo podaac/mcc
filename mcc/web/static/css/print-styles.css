@@ -1,0 +1,25 @@
+.list-group-item {
+  padding: 0 !important;
+  border: none;
+}
+
+h1, h2, h3 {
+  margin: 0 !important;
+}
+
+.list-group-item h4, .list-group-item p {
+  margin: 0 !important;
+}
+
+.list-group {
+    margin-bottom: 0 !important;
+}
+
+.collapse {
+  display: block;
+  height: initial !important;
+}
+
+hr {
+  display: none;
+}

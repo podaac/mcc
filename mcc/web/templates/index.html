@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Google Tag Manager -->
+  <!-- DISABLE TAG
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-WNP7MLF');</script>
+  DISABLE TAG -->
+  <!-- End Google Tag Manager -->
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Compliance Checker</title>
+  <style>
+    #progressWrapper {
+      width: 50%;
+      margin: 20px auto;
+      border: 1px solid #ccc;
+      padding: 5px;
+      display: none;
+    }
+    #progressBar {
+      width: 0%;
+      height: 30px;
+      background-color: #4CAF50;
+      text-align: center;
+      line-height: 30px;
+      color: white;
+    }
+  </style>
+  <!-- Bootstrap -->
+  <link href="./static/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- PODAAC Template CSS -->
+  <!--    <link href="./static/css/podaac.jpl-banner.css" type="text/css" rel="stylesheet" />
+      <link href="./static/css/podaac-template.css" type="text/css" rel="stylesheet" />-->
+
+  <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+  <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+  <![endif]-->
+
+  <!-- There is a subtle irony in the fact that this page does not
+       pass the W3C HTML5 conformance checker. Mostly, this is because of
+       the use of descendants of labels being use to project a larger
+       clickable area. -->
+  <link href="./static/css/template.css" type="text/css" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="./static/images/jpl-nasa-logo.png" />
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<!-- DISABLE TAG
+<noscript><iframe src=https://www.googletagmanager.com/ns.html?id=GTM-WNP7MLF
+                  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+DISABLE TAG -->
+<!-- End Google Tag Manager (noscript) -->
+<!-- PODAAC header content -->
+<div id="podaac-header-container">
+  <header id="podaac-header" role="banner">
+    <div id="block-podaac-helper-podaac-jpl-banner" class="block block-podaac-helper first odd">
+
+      <div class="block-content">
+
+        <div id="JPL-banner">
+
+          <div id="JPL-home">
+            <a href="http://www.nasa.gov/" id="JPL-NASA-link"></a>
+            <a href="http://www.jpl.nasa.gov/" id="JPL-home-link">Jet Propulsion Laboratory</a>
+            <a href="http://www.caltech.edu/" id="JPL-caltech-link">California Institute of Technology</a>  </div>
+
+        </div><!-- /.JPL-banner -->
+
+      </div>
+
+    </div><!-- /.block -->
+    <div id="block-podaac-helper-podaac-search" class="block block-podaac-helper first odd">
+
+      <div class="block-content">
+
+        <form action="https://podaac.jpl.nasa.gov/helper/search" method="GET" id="podaac-search-form" accept-charset="UTF-8"><div><div class="form-item form-type-select form-item-type">
+          <label class="element-invisible" for="edit-type">Search Type </label>
+          <select class="not-chosen form-select" id="edit-type" name="type"><option value="website">Website</option><option value="dataset" selected="selected">Data</option></select>
+        </div>
+          <div class="form-item form-type-textfield form-item-search">
+            <label class="element-invisible" for="edit-search">Search </label>
+            <input title="Enter the terms you wish to search for." type="text" id="edit-search" name="search" value="Search" size="15" maxlength="128" class="form-text">
+          </div>
+        </div></form>  </div>
+
+    </div><!-- /.block -->
+
+    <hgroup id="podaac-name-and-slogan">
+      <a href="https://podaac.jpl.nasa.gov/" title="Home" rel="home" id="podaac-logo"><img src="./static/images/logo.png" alt="Home"></a>    </hgroup>
+
+    <div id="podaac-header-satellite"></div>
+
+    <div id="podaac-follow-us">
+      <span id="podaac-follow-us-trigger">Follow Us</span>
+      <ul id="podaac-follow-us-links">
+        <li><a href="https://www.facebook.com/NASAEarthData" class="podaac-follow-us-icon" id="podaac-facebook" target="_blank" title="NASA Earthdata Facebook"></a></li>
+        <li><a href="http://www.youtube.com/user/NASAJPLPODAAC" class="podaac-follow-us-icon" id="podaac-youtube" target="_blank" title="PODAAC YouTube"></a></li>
+        <li><a href="https://twitter.com/NASAEarthData" class="podaac-follow-us-icon" id="podaac-twitter" target="_blank" title="NASA Earthdata Twitter"></a></li>
+      </ul>
+    </div>
+    <div class="podaac-clearfix"></div>
+  </header>
+
+  <div id="podaac-header-banner"></div>
+</div>
+
+<div id="podaac-main-container">
+  <div id="podaac-content-backdrop">
+    <div id="podaac-backdrop">
+      <div id="podaac-backdrop-gradient"></div>
+    </div>
+  </div>
+
+  <div id="podaac-main">
+    <div id="podaac-navigation">
+      <div class="podaac-clearfix"></div>
+    </div>
+
+    <div id="podaac-content-container">
+      <div id="podaac-content">
+        <div id="podaac-page-content">
+          <div class="container-fluid">
+            <div class="row">
+              <div>
+                <h1>Metadata Compliance Checker</h1>
+
+                <hr />
+
+                <form id="uploadForm" enctype="multipart/form-data">
+                  <div class="form-group">
+                    <label for="fileInput">
+                      <h4>Select a netCDF file: <small>maximum size {{ max_file_size }}<br>
+                        MCC supports valid netCDF files including those that are compressed with gzip or bzip.<br>
+                        Acceptable file extensions are: .gz, .bz2, .nc, .h5, .nc4 and .hdf.</small></h4>
+                    </label>
+
+                    <!-- Tab panes -->
+                    <div class="tab-content">
+                      <div class="tab-pane active" id="file-upload">
+                        <input type="file" name="file-upload" id="fileInput">
+                        <p class="help-block" id="aboutFile"></p>
+                      </div>
+                    </div>
+
+                    <div id="warningDiv" class="warning-msg" style="display: none;">
+                      <i class="fa fa-warning"></i>
+                      Selected file is Large. Recommendation: File Upload and processing will perform better with <a href="https://mcc.podaac.earthdatacloud.nasa.gov/mcc/about_api">MCC API</a>
+                    </div>
+
+                    <div id="errorDiv" class="warning-msg" style="display: none;">
+                      <i class="fa fa-warning" style="color:red"></i>
+                      Selected file exceeds the upload limit of {{ max_file_size }}.
+                    </div>
+
+                    <div id="progressDiv" class="progress progress-striped active" style="display: none;">
+                      <div id="progressBar" role="progressbar progress-striped" style="width: 0%; background-color: #4169E1; font-size: 13px; font-style: oblique; color: silver;" class="progress-bar"></div>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label>
+                      <h3>Checkers <small>select one or more</small></h3>
+                    </label>
+                    <div>
+                      {% for checker in checkers %}
+                      <div class="checkbox">
+                        <label>
+                          <input type="checkbox" class="checkerCheckBoxes" name="{{ checker['short_name'] }}">
+                          {{ checker['short_name'] }} ({{ checker['name'] }})
+
+                          <ul>
+                            {% if "options" in checker %}
+                            <li>
+                              <b>Level:</b>
+                              <select name="{{ checker['short_name']|e }}-parameter">
+                                {% for option in checker['options'] %}
+                                <option>{{ option }}</option>
+                                {% endfor %}
+                              </select>
+                            </li>
+                            {% endif %}
+
+                            <li>
+                              <b>Description:</b>
+                              {{ checker['description'] }}
+                            </li>
+
+                            <li>
+                              <b>URL:</b>
+                              <a href="{{ checker['url'] }}">{{ checker['url'] }}</a>
+                            </li>
+
+                            <li>
+                              <b>Version:</b>
+                              {% if checker['versions']|length > 1 %}
+                              <select name="{{ checker['short_name']|e }}-version">
+                                {% for version in checker['versions'] %}
+                                <option>{{ version }}</option>
+                                {% endfor %}
+                              </select>
+                              {% else %}
+                              {{ checker['versions'][0] }}
+                              {% endif %}
+                            </li>
+                          </ul>
+                        </label>
+                      </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  <hr>
+                  <div class="form-group">
+                    <h3>Output format</h3>
+                    <label class="radio-inline">
+                      <input type="radio" class="responseRadioBox" name="response" value="html" checked>
+                      Web Page
+                    </label>
+                    <label class="radio-inline">
+                      <input type="radio" class="responseRadioBox" name="response" value="pdf">
+                      PDF
+                    </label>
+                  </div>
+                  <button onclick="postFile();" type="button" id="uploadButton" class="btn btn-primary btn-lg btn-block" disabled=true>Upload</button>
+                </form>
+
+                <hr />
+
+                <ul class="list-inline text-center">
+                  <li><a href="about_api"><h4>API</h4></a></li>
+                  <li><a href="https://podaac.jpl.nasa.gov/"><h4>PODAAC</h4></a></li>
+                </ul>
+                <ul class="list-inline text-center">
+                  <span class="footer_box">
+                    <span class="footer_env">{{ venue }}</span>
+                    <span class="footer_ver">v{{ mcc_version }}</span>
+                  </span>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="podaac-footer"></div>
+
+<script type="text/javascript">
+  podaac_settings = {
+    load_menu: true,
+    load_footer: true
+  };
+</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="./static/js/bootstrap.min.js"></script>
+<script src="./static/js/template.js"></script>
+
+<script>
+function postFile() {
+  // Reset progress bar
+  progressBar.innerHTML = "<span style=\"left: 45%; margin-top: -5px; position: absolute;\">Uploading...</span>";
+  progressBar.style.width = 0 + '%';
+
+  // Display the progress bar
+  if (progressDiv.style.display != 'block') {
+    progressDiv.style.display = 'block';
+  }
+
+  var uploadForm = document.getElementById("uploadForm");
+  var formdata = new FormData(uploadForm);
+  var responseFormat = formdata.get("response");
+  var fileInput = document.getElementById("fileInput");
+
+  var request = new XMLHttpRequest();
+
+  if (responseFormat == "pdf") {
+    request.responseType = 'arraybuffer';
+  }
+
+  // Configure event listener callback which determines how much has been uploaded from client
+  // and updates progress bar accordingly
+  request.upload.addEventListener('progress', function (e) {
+    var fileSize = fileInput.files[0].size;
+
+    if (e.loaded <= fileSize) {
+      var percent = Math.round(e.loaded / fileSize * 100);
+      progressBar.style.width = percent + '%';
+    }
+
+    if(e.loaded == e.total){
+      progressBar.style.width = 100 + '%';
+      progressBar.innerHTML = "<span style=\"left: 45%; margin-top: -5px; position: absolute;\">Upload Complete</span>";
+    }
+  });
+
+  // Callback to process response from MCC
+  // Response can be one of two forms: HTML page or PDF file
+  request.onreadystatechange = function() {
+    if (request.readyState == XMLHttpRequest.DONE) {
+      var mimetype;
+
+      if (responseFormat == "pdf") {
+        mimetype = 'application/pdf';
+      } else {
+        mimetype = 'text/html';
+      }
+
+      var blob = new Blob([request.response], { type: mimetype });
+
+      if (responseFormat == "pdf" && request.status == 200) {
+        // Set up automatic download of PDF into caller's browser
+        const contentDisposition = request.getResponseHeader("Content-Disposition");
+        const filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+      } else {
+        // Render a new page from the HTML blob by assigning it a URL and opening it
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, "_blank");
+      }
+
+      // If the request results in an error from MCC, the above logic will render
+      // the error details into a separate tab, similar to a valid HTML-format respone.
+      // However, we still need to hide the progress bar afterwords if an error occurred.
+      if (request.status != 200) {
+        progressDiv.style.display = 'none';
+      }
+    }
+  }
+
+  request.open('POST', '/check');
+  request.send(formdata);
+}
+</script>
+
+<script type="text/javascript">
+  (function () {
+    /* Ensure javscript enhances. Make sure page is basically functional
+     * without javscript.
+     */
+    var $fileInput = $('#fileInput');
+    var $aboutFile = $('#aboutFile');
+    var	$urlInput = $('#urlInput');
+
+    var humanBytes = function (n) {
+      var units = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+      var precision = 2;
+      for (var unit_idx in units) {
+        if (n < 1000) {
+          /* For units of bytes, KB and MB, use only single point of precision to emulate what a user
+             might see from their OS filesystem. For GB onward, default to 2. */
+          if (units[unit_idx] == 'bytes' || units[unit_idx] == 'KB' || units[unit_idx] == 'MB') {
+            precision = 1;
+          }
+          return n.toFixed(precision) + ' ' + units[unit_idx]
+        }
+        n /= 1000;
+      }
+    }
+
+    var updateFileAbout = function (evt) {
+      // Clear any existing progress bar and warning to prepare for new selected file
+      document.getElementById("progressDiv").style.display = 'none';
+      document.getElementById("warningDiv").style.display = 'none';
+      document.getElementById("errorDiv").style.display = 'none';
+
+      // Reenable the upload button
+      document.getElementById("uploadButton").disabled = false;
+
+      var file = evt.target.files[0] || null;
+      if (file) {
+        var message = file.name + ' ' + '(' + humanBytes(file.size) + ')';
+        $aboutFile.text(message);
+        $urlInput.val('');
+        var largeFile = 1000 * 1000 * 1000; // file size: 1 GB
+
+        // If we've been given a file that exceeds size limit, display error box and disable
+        // the submit button
+        if (file.size > {{ max_file_size_bytes }}){
+          document.getElementById("errorDiv").style.display = 'block';
+          document.getElementById("uploadButton").disabled = true;
+        }
+        // If we've been given a large file, display the warning box
+        else if (file.size > largeFile) {
+          document.getElementById("warningDiv").style.display = 'block';
+        }
+      }
+    };
+
+    $fileInput.on('change', updateFileAbout);
+    $urlInput.bind('input', function() {
+      $fileInput[0].value = "";
+      $aboutFile.text('');
+    });
+
+  })();
+</script>
+</body>
+</html>

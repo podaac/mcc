@@ -1,0 +1,15 @@
+h3[data-toggle] {
+    cursor: pointer;
+}
+
+.list-group .list-group-item {
+    padding: 5px 15px;
+}
+
+.list-group .list-group-item h4 {
+    margin-top: 5px;
+}
+
+.list-group .list-group-item h3 {
+    margin-top: 10px;
+}

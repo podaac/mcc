@@ -1,0 +1,8 @@
+arrow==0.14.0
+pyproj==3.3.0
+OWSlib==0.28.1
+cf-units==3.0.0
+compliance-checker==5.1.0
+urllib3==1.26.19
+setuptools==70.0.0
+mod_wsgi==4.9.4

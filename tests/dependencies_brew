@@ -1,0 +1,11 @@
+# 'brew tap'
+tap "homebrew/bundle"
+tap "homebrew/cask"
+tap "homebrew/core"
+
+# 'brew install'
+brew "cask"
+brew "wget"
+
+# 'brew install --cask'
+cask "chromedriver"
