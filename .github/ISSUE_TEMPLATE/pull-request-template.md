@@ -1,12 +1,3 @@
----
-name: Pull Request Template
-about: Describe this issue template's purpose here.
-title: ''
-labels: ''
-assignees: ''
-
----
-
 Ticket: [MCC-XXXX](https://github.com/podaac/mcc/issues/XXXX)
 
 ### Description
