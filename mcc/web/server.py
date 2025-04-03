@@ -263,6 +263,19 @@ def check():
     return response
 
 
+@app.route('/about')
+def about():
+    """
+    Returns the "About" page using the current MCC configuration.
+    """
+    return render_template(
+        'about.html',
+        checkers=[checker.ABOUT for checker in list(CHECKERS.values())],
+        homepage_url=app.config['HomepageURL'],
+        mcc_version=str(mcc_version)
+    )
+
+
 @app.route('/about_api')
 def about_api():
     """
