@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added client-side upload file size check that disables upload submission when a user selects a file that exceeds the limit set by server
+- Added /about endpoint to render an About MCC page and added link to new endpoint on the index page.
 - **PODAAC-6770**
   - Incorporated use of the v90 Standard Names Table with the ACDD suite
   - Integrated use of the CF_STANDARD_NAME_TABLE environment variable to override the default Standard Name Table (v72) used
