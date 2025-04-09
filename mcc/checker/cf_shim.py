@@ -14,6 +14,7 @@ import logging
 import sys
 import time
 from random import randrange
+from typing import OrderedDict
 
 from compliance_checker import cfutil
 from compliance_checker.base import BaseCheck, Result, fix_return_value
@@ -129,6 +130,15 @@ def _run_check_patch(self, check_method, ds):
 
     if isinstance(val, list):
         return [fix_return_value(v, check_method.__func__.__name__, check_method, check_method.__self__) for v in val]
+    # The check_grid_mapping function returns an empty OrderedDict when no actual
+    # checks have been performed (i.e. dataset has no grid_mapping attribute),
+    # but as-is an empty OrderedDict is mapped into a boolean False by the
+    # compliance_checker.Result class, resulting in what looks like a failed
+    # check in the final report.
+    # We morph the value to None here to ensure the Result is mapped properly
+    # into a (passing) skipped check.
+    elif isinstance(val, OrderedDict) and len(val) == 0:
+        val = None
 
     return [fix_return_value(val, check_method.__func__.__name__, check_method, check_method.__self__)]
 
