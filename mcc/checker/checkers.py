@@ -102,7 +102,7 @@ class CheckStandardName(Checker):
     a suggestion if one is found. This process is very slow (relatively), so
     use this with caution.
     """
-    STANDARD_NAME_TABLE_FN = join(dirname(__file__), 'data', 'CF-Standard-Names-Table-77.json')
+    STANDARD_NAME_TABLE_FN = join(dirname(__file__), 'data', 'CF-Standard-Names-Table-90.json')
     CHECKER_NAME = 'check for standard name'
 
     def __init__(self, dataset):
