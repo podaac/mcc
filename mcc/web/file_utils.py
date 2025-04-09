@@ -156,7 +156,11 @@ def get_dataset_from_file(uploaded_file):
     # to read the file contents but not reference a location on disk.
     # Copy the uploaded file to a named temporary file, so we can provide a disk
     # location when initializing the netCDF.Dataset object below.
-    datafile = tempfile.NamedTemporaryFile()
+
+    # Since the CF suite checks the Dataset's filename for compliance,
+    # we need to make sure the original is incorporated into the name of the
+    # temporary file used to initialize the Dataset object below.
+    datafile = tempfile.NamedTemporaryFile(suffix=f"_{datafile_name}")
     datafile.write(uploaded_file.read())
     datafile.seek(0)
 
