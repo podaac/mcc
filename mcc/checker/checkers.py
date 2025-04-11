@@ -51,11 +51,18 @@ class CheckExistence(Checker):
 
 class CheckCommaSeparated(Checker):
     """
-    Determines if a value is comma-separated or not based on a simple majority
-    count of comma characters versus non-{alphanumeric,comma,space} characters.
+    Determines if a value is comma-separated or not based on several
+    heuristic checks. A string value is considered to be comma-separated if it
+    passes either of the following sub-checks:
+
+        - The value matches a regular expression for comma-delimited strings
+        - The value contains a simple majority count of comma characters versus
+          non-{alphanumeric,comma,space} characters.
+        - The value is a single string with no non-{alphanumeric,comma,space} characters
     """
-    # note this character set is not unicode aware
+    # note this character set is not Unicode aware
     NON_ALPHANUMERIC = re.compile(r'[^A-z0-9 ,]')
+    COMMA_SEPARATED = re.compile(r"^(\s*[A-z0-9\-/<>.\s]+\s*)(,\s*[A-z0-9\-/<>.\s]+\s*)+$")
     CHECKER_NAME = 'check for a comma separated value'
 
     @staticmethod
@@ -79,13 +86,27 @@ class CheckCommaSeparated(Checker):
 
         return is_majority_commas, number_commas, number_nonalphanumeric
 
+    @staticmethod
+    def is_comma_delimited(value):
+        """
+        Determine if the provided string matches a regex for detecting
+        comma-delimination.
+
+        @param value string to check
+        @return True if the provided string matches the regex for comma-delimination,
+                False otherwise.
+        """
+        return bool(CheckCommaSeparated.COMMA_SEPARATED.match(value))
+
     def run_global(self, blueprint, value):
         if value is None:
             return self.error('does not exist')
 
-        dominant, _, _ = CheckCommaSeparated.commas_dominant(value)
+        comma_delimited = CheckCommaSeparated.is_comma_delimited(value)
 
-        if dominant:
+        comma_dominant, number_commas, number_nonalphanumeric = CheckCommaSeparated.commas_dominant(value)
+
+        if comma_delimited or comma_dominant or (number_commas == number_nonalphanumeric == 0):
             return self.success('is separated by commas')
 
         return self.error('might not be comma separated')
@@ -102,7 +123,7 @@ class CheckStandardName(Checker):
     a suggestion if one is found. This process is very slow (relatively), so
     use this with caution.
     """
-    STANDARD_NAME_TABLE_FN = join(dirname(__file__), 'data', 'CF-Standard-Names-Table-77.json')
+    STANDARD_NAME_TABLE_FN = join(dirname(__file__), 'data', 'CF-Standard-Names-Table-90.json')
     CHECKER_NAME = 'check for standard name'
 
     def __init__(self, dataset):

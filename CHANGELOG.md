@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added client-side upload file size check that disables upload submission when a user selects a file that exceeds the limit set by server
+- **PODAAC-6770**
+  - Incorporated use of the v90 Standard Names Table with the ACDD suite
+  - Integrated use of the CF_STANDARD_NAME_TABLE environment variable to override the default Standard Name Table (v72) used
+    with the CF suite to v90.
+  - Added a unit test suite for the classes in mcc/checker/checker.py
+  - Improved the tests performed in the CheckCommaSeparated class for better detection of comma-delimited strings
+  - Added support for v1.8 and v1.9 of the CF checker
 ### Changed
 - **PODAAC-5873**
   - Made several updates to file utility functions to ensure temporary files are always deleted after use
@@ -14,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added unit test to ensure no temporary files remain after processing an input file attachment 
 - **PODAAC-5694**
   - Updated Build/Deploy Jenkinsfiles to support deployments to NGAP instead of on-prem
+- **PODAAC-6770**
+  - Bumped compliance-checker package version to 5.1.1
 ### Deprecated
 ### Removed
 - **PODAAC-6763**
@@ -22,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Various files have been sanitized to remove references to PO.DAAC resources such as server names or URLs
 ### Fixed
   - Fixed issue where venue name was hardcoded to "SIT" within the index.html template
+- **PODAAC-6770**
+  - Fixed issue where a skipped grid_mapping check from the CF suite was reported incorrectly as having failed
+  - Fixed issue where filename checks in the CF suite would fail because of temporary file usage
 - **PODAAC-6722**
   - Fixed issue where results page/tab did not have an associated URL to allow users to refresh without losing contents
 - **PODAAC-6686**

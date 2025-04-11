@@ -14,12 +14,15 @@ import logging
 import sys
 import time
 from random import randrange
+from typing import OrderedDict
 
 from compliance_checker import cfutil
 from compliance_checker.base import BaseCheck, Result, fix_return_value
 from compliance_checker.cf import util
 from compliance_checker.cf.cf_1_6 import CF1_6Check
 from compliance_checker.cf.cf_1_7 import CF1_7Check
+from compliance_checker.cf.cf_1_8 import CF1_8Check
+from compliance_checker.cf.cf_1_9 import CF1_9Check
 from compliance_checker.cf.cf_base import CFNCCheck
 from compliance_checker.suite import CheckSuite as CCCheckSuite
 from flask import abort
@@ -129,6 +132,15 @@ def _run_check_patch(self, check_method, ds):
 
     if isinstance(val, list):
         return [fix_return_value(v, check_method.__func__.__name__, check_method, check_method.__self__) for v in val]
+    # The check_grid_mapping function returns an empty OrderedDict when no actual
+    # checks have been performed (i.e. dataset has no grid_mapping attribute),
+    # but as-is an empty OrderedDict is mapped into a boolean False by the
+    # compliance_checker.Result class, resulting in what looks like a failed
+    # check in the final report.
+    # We morph the value to None here to ensure the Result is mapped properly
+    # into a (passing) skipped check.
+    elif isinstance(val, OrderedDict) and len(val) == 0:
+        val = None
 
     return [fix_return_value(val, check_method.__func__.__name__, check_method, check_method.__self__)]
 
@@ -213,12 +225,31 @@ class CF1_7Shim(CCCheckSuite):
     version = '1.7'
 
 
+# CF 1.8 Conventions
+class CF1_8Shim(CCCheckSuite):
+    CF1_8Check.check_calendar = check_calendar_patch
+    checkers = {'cf': CF1_8Check}
+    _get_checks = _get_checks_patch
+    _run_check = _run_check_patch
+    run = group_run_patch
+    version = '1.8'
+
+
+class CF1_9Shim(CCCheckSuite):
+    CF1_9Check.check_calendar = check_calendar_patch
+    checkers = {'cf': CF1_9Check}
+    _get_checks = _get_checks_patch
+    _run_check = _run_check_patch
+    run = group_run_patch
+    version = '1.9'
+
+
 class CF(CheckSuite):
     ABOUT = {
         'name': 'netCDF Climate and Forecast Metadata Conventions',
         'short_name': 'CF',
-        'url': 'http://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/cf-conventions.html',
-        'versions': ('1.6', '1.7'),
+        'url': 'http://cfconventions.org/Data/cf-conventions/cf-conventions-1.9/cf-conventions.html',
+        'versions': ('1.6', '1.7', '1.8', '1.9'),
         'description': 'The conventions define metadata that provide a definitive description of what the data in '
                        'each variable represents, and the spatial and temporal properties of the data. This enables '
                        'users of data from different sources to decide which quantities are comparable, and '
@@ -263,7 +294,7 @@ class CF(CheckSuite):
         results = []
 
         try:
-            results = self.shim.run(dataset, 'cf')['cf'][0]
+            results = self.shim.run(dataset, [], 'cf')['cf'][0]
         except KeyError as err:
             logger.warning(f"The key {str(err)} does not exist")
 
@@ -298,5 +329,9 @@ class CF(CheckSuite):
             self.shim = CF1_6Shim()
         elif version == '1.7':
             self.shim = CF1_7Shim()
+        elif version == '1.8':
+            self.shim = CF1_8Shim()
+        elif version == '1.9':
+            self.shim = CF1_9Shim()
 
         return self
