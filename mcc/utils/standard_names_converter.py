@@ -40,8 +40,8 @@ def parse_entries(soup):
             'aliases': aliases.get(name, None),
             'description': entry.description.text or None,
             'canonical_units': entry.canonical_units.text or None,
-            'amip': entry.amip.text or None,
-            'grib': entry.grib.text or None,
+            'amip': entry.amip.text if hasattr(entry.amip, "text") else None,
+            'grib': entry.grib.text if hasattr(entry.grib, "text") else None,
         }
 
 
