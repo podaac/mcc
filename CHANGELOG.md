@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v1.5.1]
 ### Added
 - Added client-side upload file size check that disables upload submission when a user selects a file that exceeds the limit set by server
 - Added /about endpoint to render an About MCC page and added link to new endpoint on the index page.
