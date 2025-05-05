@@ -284,6 +284,7 @@ def about_api():
     """
     return render_template(
         'about_api.html',
+        checkers={checker.ABOUT['short_name']: checker.ABOUT for checker in list(CHECKERS.values())},
         max_size=format_byte_size(app.config['MAX_CONTENT_LENGTH'],),
         homepage_url=app.config['HomepageURL']
     )
