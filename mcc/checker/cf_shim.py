@@ -16,9 +16,8 @@ import time
 from random import randrange
 from typing import OrderedDict
 
-from compliance_checker import cfutil
 from compliance_checker.base import BaseCheck, Result, fix_return_value
-from compliance_checker.cf import util
+from compliance_checker.cf import util as cfutil
 from compliance_checker.cf.cf_1_6 import CF1_6Check
 from compliance_checker.cf.cf_1_7 import CF1_7Check
 from compliance_checker.cf.cf_1_8 import CF1_8Check
@@ -173,7 +172,7 @@ def check_calendar_patch(self, ds):
 
     # this will only fetch variables with time units defined
     for time_var_name in cfutil.get_time_variables(ds):
-        if time_var_name not in {var.name for var in util.find_coord_vars(ds)}:
+        if time_var_name not in {var.name for var in cfutil.find_coord_vars(ds)}:
             continue
         time_var = ds.variables[time_var_name]
         if not hasattr(time_var, "calendar"):

@@ -1,4 +1,4 @@
-FROM snyk/snyk:python-3.8
+FROM snyk/snyk:python-3.11
 
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -9,17 +9,13 @@ RUN apt-get update && apt-get install -y \
 
 RUN adduser --quiet --disabled-password --shell /bin/sh --home /home/dockeruser --uid 300 dockeruser
 
-USER dockeruser
-COPY requirements.txt /home/dockeruser/
-COPY requirements-checkers.txt /home/dockeruser/
 WORKDIR "/home/dockeruser"
-RUN pwd
-RUN ls -al
 
-RUN pip3 install --upgrade pip \
-    && pip3 install awscli --upgrade
+RUN pip install --upgrade pip awscli
+
 USER root
-RUN apt-get -y install apache2-dev apache2
+
+RUN apt-get -y install apache2-dev apache2 libhdf5-serial-dev libnetcdf-dev
 
 RUN curl -O https://downloads.unidata.ucar.edu/udunits/2.2.28/udunits-2.2.28.tar.gz \
 	&& tar xzf udunits-2.2.28.tar.gz \
@@ -37,7 +33,10 @@ ENV C_INCLUDE_PATH=/usr/local/lib/:$C_INCLUDE_PATH
 ENV UDUNITS2_LIBS=/usr/include/udunits2/:$UDUNITS2_LIBS
 ENV UDUNITS2_LIBS=/usr/local/lib/:$UDUNITS2_LIBS
 ENV UDUNITS2_INCLUDE=/usr/local/lib:$UDUNITS2_INCLUDE
+
 USER dockeruser
+COPY requirements.txt /home/dockeruser/
+COPY requirements-checkers.txt /home/dockeruser/
 RUN curl -sSL https://install.python-poetry.org | python3 - --version 1.5.1
 
 ENV PATH="${PATH}:/home/dockeruser/.local/bin"
@@ -45,9 +44,7 @@ ENV PATH="${PATH}:/home/dockeruser/.local/bin"
 RUN poetry --version
 
 USER root
-RUN pwd
-RUN ls -al
-RUN pip install -r requirements.txt
-RUN pip install -r requirements-checkers.txt
+
+RUN pip install -r requirements.txt -r requirements-checkers.txt
 
 CMD ["sh"]
