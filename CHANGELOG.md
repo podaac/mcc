@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecated
 ### Removed
 ### Fixed
+- Fixed typo and wording issue in the About MCC template
+- Fixed issue in the About API template where supported Checker versions was hardcoded
+- Standardized the footer links across all MCC web page templates
+- Moved detect-secrets.yaml Github Action into the proper .github/workflow directory
 ### Security
 - Resolved snyk vulnerability finding by upgrading setuptools to v78.1.1
 - Migrated base image for MCC from centos7 to rockylinux8
