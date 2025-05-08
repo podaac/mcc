@@ -44,7 +44,7 @@ COPY --chmod=644 requirements.txt /tmp/
 COPY --chmod=644 requirements-checkers.txt /tmp/
 
 RUN pip3.11 install --upgrade pip \
-    && pip3.11 install -r /tmp/requirements.txt /tmp/requirements-checkers.txt mod_wsgi==4.9.4 \
+    && pip3.11 install -r /tmp/requirements.txt -r /tmp/requirements-checkers.txt mod_wsgi==4.9.4 \
     && mod_wsgi-express install-module > /etc/httpd/conf.modules.d/02-wsgi.conf
 
 # This needs to be set to allow Apache/Python to write to the temp directory
