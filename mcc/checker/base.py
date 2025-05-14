@@ -121,6 +121,22 @@ class Group(object):
         if not hasattr(self, 'blueprints'):
             self.blueprints = deque()
 
+    def __str__(self):
+        """
+        Returns the string representation of this Group object.
+
+        The string representation consists of the name of this Group, preceeded
+        by the names of all parent Groups delimited by forward-slash.
+        """
+        result = ""
+
+        if hasattr(self, "parent"):
+            result += f"{self.parent.__str__()}/"
+
+        result += self.name
+
+        return result
+
     def _get_extendable_attributes(self, new_checkers=None):
         """
         Get a copy of all the attributes set on this Group.
