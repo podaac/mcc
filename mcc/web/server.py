@@ -63,23 +63,14 @@ with open('/var/www/html/mcc/web/VERSION', 'r') as f:
 # Apache will instead, meaning the page will not be styled or templated.
 @app.errorhandler(413)
 def req_entity_too_large(err):
-    if request.form.get('response') in ('html', 'pdf'):
-        ret = render_template(
-            'error.html',
-            error='File upload too large',
-            text="",
-            description=f"The maximum upload size is {format_byte_size(app.config['MAX_CONTENT_LENGTH'])}.",
-            homepage_url=app.config['HomepageURL']
-        )
-        return ret, 413
-    # Default to JSON-format response
-    else:
-        ret = {
-            'error': 'File upload too large',
-            'text': '',
-            'description': f"The maximum upload size is {format_byte_size(app.config['MAX_CONTENT_LENGTH'])}."
-        }
-        return jsonify(ret), 413
+    # We should only ever reach this handler when a granule is submitted directly
+    # to the API, so default to a JSON-format response
+    ret = {
+        'error': 'File upload too large',
+        'text': '',
+        'description': f"The maximum upload size is {format_byte_size(app.config['MAX_CONTENT_LENGTH'])}."
+    }
+    return jsonify(ret), 413
 
 
 @app.errorhandler(500)
