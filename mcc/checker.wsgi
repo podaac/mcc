@@ -11,7 +11,8 @@ sys.path.append(os.path.dirname(__file__))
 
 
 def application(environ, start_response):
-    os.environ['MaxFileSize'] = environ.get('MaxFileSize', '4295000000')
+    os.environ['ApiMaxFileSize'] = environ.get('ApiMaxFileSize', '10737418240')
+    os.environ['UiMaxFileSize'] = environ.get('UiMaxFileSize', '4295000000')
     os.environ['HomepageURL'] = environ.get('HomepageURL', '"https://mcc.podaac.earthdatacloud.nasa.gov"')
     os.environ['TempFileLocation'] = environ.get('TempFileLocation', tempfile.gettempdir())
     os.environ['Venue'] = environ.get('Venue', 'OPS')

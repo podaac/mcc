@@ -30,8 +30,11 @@ app.jinja_env.lstrip_blocks = True
 # The JSON encoder in use when we call flask.jsonify()
 app.json_encoder = CustomJSONEncoder
 
-# Maximum allowed file size. Typically defaults to 2-4GB.
-app.config['MAX_CONTENT_LENGTH'] = int(environ['MaxFileSize'])
+# Maximum allowed file size when submitting directly to service via API.
+app.config['MAX_CONTENT_LENGTH'] = int(environ['ApiMaxFileSize'])
+
+# Maximum allowed file size when submitting via the Web frontend.
+app.config['UiMaxFileSize'] = int(environ['UiMaxFileSize'])
 
 # URL to use for MCC homepage.
 app.config['HomepageURL'] = environ['HomepageURL']
@@ -298,8 +301,11 @@ def index():
     return render_template(
         'index.html',
         checkers=[checker.ABOUT for checker in list(CHECKERS.values())],
-        max_file_size=format_byte_size(app.config['MAX_CONTENT_LENGTH']),
-        max_file_size_bytes=app.config['MAX_CONTENT_LENGTH'],
+        max_ui_file_size=format_byte_size(app.config['UiMaxFileSize']),
+        max_ui_file_size_bytes=app.config['UiMaxFileSize'],
+        max_api_file_size=format_byte_size(app.config['MAX_CONTENT_LENGTH']),
+        max_api_file_size_bytes=app.config['MAX_CONTENT_LENGTH'],
+        homepage_url=app.config['HomepageURL'],
         mcc_version=str(mcc_version),
         venue=(app.config['Venue'])
     )
