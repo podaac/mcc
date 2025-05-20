@@ -229,6 +229,10 @@ DISABLE TAG -->
                       <input type="radio" class="responseRadioBox" name="response" value="pdf">
                       PDF
                     </label>
+                    <label class="radio-inline">
+                      <input type="radio" class="responseRadioBox" name="response" value="json">
+                      JSON
+                    </label>
                   </div>
                   <button onclick="postFile();" type="button" id="uploadButton" class="btn btn-primary btn-lg btn-block" disabled=true>Upload</button>
                 </form>
@@ -313,6 +317,8 @@ function postFile() {
 
       if (responseFormat == "pdf") {
         mimetype = 'application/pdf';
+      } else if (responseFormat == "json") {
+        mimetype = 'application/json';
       } else {
         mimetype = 'text/html';
       }
