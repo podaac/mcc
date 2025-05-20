@@ -30,8 +30,11 @@ app.jinja_env.lstrip_blocks = True
 # The JSON encoder in use when we call flask.jsonify()
 app.json_encoder = CustomJSONEncoder
 
-# Maximum allowed file size. Typically defaults to 2-4GB.
-app.config['MAX_CONTENT_LENGTH'] = int(environ['MaxFileSize'])
+# Maximum allowed file size when submitting directly to service via API.
+app.config['MAX_CONTENT_LENGTH'] = int(environ['ApiMaxFileSize'])
+
+# Maximum allowed file size when submitting via the Web frontend.
+app.config['UiMaxFileSize'] = int(environ['UiMaxFileSize'])
 
 # URL to use for MCC homepage.
 app.config['HomepageURL'] = environ['HomepageURL']
@@ -60,23 +63,14 @@ with open('/var/www/html/mcc/web/VERSION', 'r') as f:
 # Apache will instead, meaning the page will not be styled or templated.
 @app.errorhandler(413)
 def req_entity_too_large(err):
-    if request.form.get('response') in ('html', 'pdf'):
-        ret = render_template(
-            'error.html',
-            error='File upload too large',
-            text="",
-            description=f"The maximum upload size is {format_byte_size(app.config['MAX_CONTENT_LENGTH'])}.",
-            homepage_url=app.config['HomepageURL']
-        )
-        return ret, 413
-    # Default to JSON-format response
-    else:
-        ret = {
-            'error': 'File upload too large',
-            'text': '',
-            'description': f"The maximum upload size is {format_byte_size(app.config['MAX_CONTENT_LENGTH'])}."
-        }
-        return jsonify(ret), 413
+    # We should only ever reach this handler when a granule is submitted directly
+    # to the API, so default to a JSON-format response
+    ret = {
+        'error': 'File upload too large',
+        'text': '',
+        'description': f"The maximum upload size is {format_byte_size(app.config['MAX_CONTENT_LENGTH'])}."
+    }
+    return jsonify(ret), 413
 
 
 @app.errorhandler(500)
@@ -298,8 +292,11 @@ def index():
     return render_template(
         'index.html',
         checkers=[checker.ABOUT for checker in list(CHECKERS.values())],
-        max_file_size=format_byte_size(app.config['MAX_CONTENT_LENGTH']),
-        max_file_size_bytes=app.config['MAX_CONTENT_LENGTH'],
+        max_ui_file_size=format_byte_size(app.config['UiMaxFileSize']),
+        max_ui_file_size_bytes=app.config['UiMaxFileSize'],
+        max_api_file_size=format_byte_size(app.config['MAX_CONTENT_LENGTH']),
+        max_api_file_size_bytes=app.config['MAX_CONTENT_LENGTH'],
+        homepage_url=app.config['HomepageURL'],
         mcc_version=str(mcc_version),
         venue=(app.config['Venue'])
     )

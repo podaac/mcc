@@ -139,7 +139,7 @@ DISABLE TAG -->
                 <form id="uploadForm" enctype="multipart/form-data">
                   <div class="form-group">
                     <label for="fileInput">
-                      <h4>Select a netCDF file: <small>maximum size {{ max_file_size }}<br>
+                      <h4>Select a netCDF file: <small>maximum size {{ max_ui_file_size }}<br>
                         MCC supports valid netCDF files including those that are compressed with gzip or bzip.<br>
                         Acceptable file extensions are: .gz, .bz2, .nc, .h5, .nc4 and .hdf.</small></h4>
                     </label>
@@ -154,12 +154,17 @@ DISABLE TAG -->
 
                     <div id="warningDiv" class="warning-msg" style="display: none;">
                       <i class="fa fa-warning"></i>
-                      Selected file is Large. Recommendation: File Upload and processing will perform better with <a href="https://mcc.podaac.earthdatacloud.nasa.gov/mcc/about_api">MCC API</a>
+                      Selected file is Large. Recommendation: File Upload and processing will perform better using the <a href="{{ homepage_url }}/about_api">MCC API</a>.
                     </div>
 
-                    <div id="errorDiv" class="warning-msg" style="display: none;">
+                    <div id="errorDivUi" class="warning-msg" style="display: none;">
                       <i class="fa fa-warning" style="color:red"></i>
-                      Selected file exceeds the upload limit of {{ max_file_size }}.
+                      Selected file exceeds this page's upload limit of {{ max_ui_file_size }}. Please submit via the <a href="{{ homepage_url }}/about_api">MCC API</a>, which has a limit of {{ max_api_file_size }}.
+                    </div>
+
+                    <div id="errorDivApi" class="warning-msg" style="display: none;">
+                      <i class="fa fa-warning" style="color:red"></i>
+                      Selected file exceeds this page's upload limit of {{ max_ui_file_size }} and the API's upload limit of {{ max_api_file_size }}. Unable to process.
                     </div>
 
                     <div id="progressDiv" class="progress progress-striped active" style="display: none;">
@@ -382,7 +387,8 @@ function postFile() {
       // Clear any existing progress bar and warning to prepare for new selected file
       document.getElementById("progressDiv").style.display = 'none';
       document.getElementById("warningDiv").style.display = 'none';
-      document.getElementById("errorDiv").style.display = 'none';
+      document.getElementById("errorDivUi").style.display = 'none';
+      document.getElementById("errorDivApi").style.display = 'none';
 
       // Reenable the upload button
       document.getElementById("uploadButton").disabled = false;
@@ -396,8 +402,12 @@ function postFile() {
 
         // If we've been given a file that exceeds size limit, display error box and disable
         // the submit button
-        if (file.size > {{ max_file_size_bytes }}){
-          document.getElementById("errorDiv").style.display = 'block';
+        if (file.size > {{ max_api_file_size_bytes }}){
+          document.getElementById("errorDivApi").style.display = 'block';
+          document.getElementById("uploadButton").disabled = true;
+        }
+        else if (file.size > {{ max_ui_file_size_bytes }}){
+          document.getElementById("errorDivUi").style.display = 'block';
           document.getElementById("uploadButton").disabled = true;
         }
         // If we've been given a large file, display the warning box
