@@ -152,7 +152,7 @@ DISABLE TAG -->
                   <tr>
                     <td>ACDD-version</td>
                     <td>If provided, 'ACDD' tag must also be present</td>
-                    <td><strong>1.1, 1.3</strong></td>
+                    <td><strong>{{ checkers['ACDD']['versions']|join(', ') }}</strong></td>
                   </tr>
                   <tr>
                     <td>CF</td>
@@ -162,7 +162,7 @@ DISABLE TAG -->
                   <tr>
                     <td>CF-version</td>
                     <td>If provided, 'CF' tag must also be present</td>
-                    <td><strong>1.6, 1.7</strong></td>
+                    <td><strong>{{ checkers['CF']['versions']|join(', ') }}</strong></td>
                   </tr>
                   <tr>
                     <td>GDS2</td>
@@ -172,7 +172,7 @@ DISABLE TAG -->
                   <tr>
                     <td>GDS2-parameter</td>
                     <td>If provided, 'GDS2' tag must also be present</td>
-                    <td><strong>L2P, L3, L4</strong></td>
+                    <td><strong>{{ checkers['GDS2']['options']|join(', ') }}</strong></td>
                   </tr>
                   <tr>
                     <td>file-upload</td>
@@ -201,8 +201,9 @@ curl -L -F GDS2=on -F GDS2-parameter=L4 -F file-upload=@/home/user/granule.nc -F
         </div>
         <hr />
         <ul class="list-inline text-center">
-        <li><a href="{{ homepage_url }}">Metadata Compliance Checker</a></li>
-        <li><a href="https://podaac.jpl.nasa.gov/">PODAAC</a></li>
+          <li><a href="{{ homepage_url }}"><h4>MCC Home</h4></a></li>
+          <li><a href="about"><h4>About MCC</h4></a></li>
+          <li><a href="https://podaac.jpl.nasa.gov/"><h4>PODAAC</h4></a></li>
         </ul>
       </div>
     </div>
