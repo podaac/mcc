@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 ### Changed
 - Python 3.11 is now the base version instead of 3.8
+- **PODAAC-6905**
+  - Added GitHub Actions workflow to perform build and deployment of MCC to NGAP
+  - Migrated Terraform scripts from private mcc-deploy repository to this repository
 ### Deprecated
 ### Removed
 ### Fixed
