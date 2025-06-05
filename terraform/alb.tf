@@ -20,7 +20,7 @@ resource "aws_lb_target_group" "fargate_service_tg" {
 
   health_check {
     enabled  = true
-    matcher  = 200
+    matcher  = "200"
     path     = "/about_api"
     port     = 443
     protocol = "HTTPS"
