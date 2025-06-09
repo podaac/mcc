@@ -1,0 +1,149 @@
+name: MCC-Build-Deploy
+
+on:
+  push:
+    branches:
+      - "feature/**"
+      - "PODAAC-**"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'SIT'
+        type: choice
+        options:
+          - SIT
+          - UAT
+          - OPS
+
+env:
+  IMAGE_NAME: ${{ github.repository }}
+  AWS_REGION: us-west-2
+  ENV_UPPERCASE: ${{ inputs.environment != '' && inputs.environment || 'SIT' }}
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+    - name: Lower Case Target Env
+      run: |
+        uppercase_env_value="${{ env.ENV_UPPERCASE }}"
+        lowercase_env_value=$(echo "${uppercase_env_value}" | tr '[:upper:]' '[:lower:]')
+        echo "ENV_LOWERCASE=${lowercase_env_value}" >> $GITHUB_ENV
+
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Versioning
+      run: |
+        base_version=$(cat VERSION | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        # If deploying to OPS, the correct version should already be set in the VERSION file.
+        if [[ "${{ env.ENV_UPPERCASE }}" == "OPS" ]]; then
+          new_version="${base_version}"
+        # If deploying to SIT or UAT, append the short git commit hash to the base version.
+        else
+          new_version="${base_version}.$(git rev-parse --short HEAD)"
+          # Update the VERSION file so the updated version is displayed on the Webapp.
+          echo "${new_version}" > VERSION
+        fi
+        echo "NEW_VERSION=${new_version}" >> $GITHUB_ENV
+
+    - name: Run Snyk monitor
+      uses: snyk/actions/python@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        command: monitor
+        args: >
+          --org=${{ secrets.SNYK_ORG_ID }}
+          --project-name=${{ github.repository }}
+          --file=requirements.txt
+          --package-manager=pip
+          --skip-unresolved
+
+    - name: Run Snyk test on requirements.txt
+      uses: snyk/actions/python@master
+      env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        command: test
+        args: >
+            --org=${{ secrets.SNYK_ORG_ID }}
+            --project-name=${{ github.repository }}
+            --file=requirements.txt
+            --package-manager=pip
+            --severity-threshold=high
+            --skip-unresolved
+            --fail-on=all
+
+    - name: Run Snyk test on requirements-checkers.txt
+      uses: snyk/actions/python@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        command: test
+        args: >
+          --org=${{ secrets.SNYK_ORG_ID }}
+          --project-name=${{ github.repository }}
+          --file=requirements-checkers.txt
+          --package-manager=pip
+          --severity-threshold=high
+          --skip-unresolved
+          --fail-on=all
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets[format('AWS_ACCESS_KEY_ID_SERVICES_{0}', env.ENV_UPPERCASE)] }}
+        aws-secret-access-key: ${{ secrets[format('AWS_SECRET_ACCESS_KEY_SERVICES_{0}', env.ENV_UPPERCASE)] }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-tag-push-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ env.IMAGE_NAME }}:${{ env.NEW_VERSION }}
+      run: |
+        docker buildx build --push --cache-to type=gha --cache-from type=gha --build-arg VENUE=$ENV_LOWERCASE -t $ECR_REGISTRY/$IMAGE_TAG -f Dockerfile .
+        echo "image=$ECR_REGISTRY/$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.5.3
+
+    - name: Deploy Terraform (with new ECS Task Definition)
+      working-directory: terraform/
+      env:
+        TF_IN_AUTOMATION: true
+        TF_INPUT: false
+        TF_VAR_region: ${{ env.AWS_REGION }}
+        TF_VAR_stage: ${{ env.ENV_LOWERCASE }}
+        TF_VAR_profile: ${{ secrets[format('AWS_PROFILE_{0}', env.ENV_UPPERCASE)] }}
+        TF_VAR_app_version: ${{ env.NEW_VERSION }}
+        TF_VAR_vpc_id: ${{ secrets[format('AWS_VPC_ID_{0}', env.ENV_UPPERCASE)] }}
+        TF_VAR_private_subnets: ${{ secrets[format('AWS_SUBNETS_{0}', env.ENV_UPPERCASE)] }}
+        TF_VAR_load_balancer_name: ${{ secrets[format('AWS_LOAD_BALANCER_NAME_{0}', env.ENV_UPPERCASE)] }}
+        TF_VAR_load_balancer_sg_name: ${{ secrets[format('AWS_LOAD_BALANCER_SG_NAME_{0}', env.ENV_UPPERCASE)] }}
+      run: |
+        terraform init -reconfigure \
+          -backend-config="bucket=${{ secrets[format('AWS_TF_BACKEND_BUCKET_{0}', env.ENV_UPPERCASE)] }}" \
+          -backend-config="region=${{ env.AWS_REGION }}"
+        terraform apply -auto-approve
