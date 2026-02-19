@@ -4,12 +4,14 @@ file_utils.py
 =============
 
 Utility functions for the web interface to use when dealing with files.
+Optimized for high-performance handling of 1GB+ NetCDF files.
 """
 
 import gzip
 import logging
 import os.path
 import tempfile
+import shutil
 from gzip import BadGzipFile
 from hashlib import md5
 from os.path import getsize
@@ -19,81 +21,53 @@ from flask import abort, current_app
 from netCDF4 import Dataset
 
 app = current_app
-
 logger = logging.getLogger(__name__)
 
+# Increase chunk size to 64KB for faster I/O on large files
+CHUNK_SIZE = 65536
 
-def hash_file(infile, hasher=None, blocksize=65536):
+
+def hash_file(infile, hasher=None, blocksize=CHUNK_SIZE):
     """
-    Incrementally generate file hashes (suitable for large files).
-
-    @param infile a python file-like object
-    @param hasher a hasher function from hashlib library (e.g. md5, sha256, ...)
-    @param blocksize an integer of bytes to read into the hash at a time
-    @return a hexdigest of the hash based on the hasher
+    Memory-efficient file hashing using chunks.
     """
     if hasher is None:
         hasher = md5()
 
-    buf = infile.read(blocksize)
-
-    while len(buf) > 0:
-        hasher.update(buf)
+    infile.seek(0)
+    while True:
         buf = infile.read(blocksize)
-
+        if not buf:
+            break
+        hasher.update(buf)
+    
     # Reset file buffer back to starting position
     infile.seek(0)
-
     return hasher.hexdigest()
 
 
 def format_byte_size(n_bytes):
     """
     Gets a human-readable representation of a file size.
-
-    @param n_bytes size of a file in bytes as a number
-    @return a string representation of that size with the largest correct units
     """
-    for unit in ('bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'):
+    for unit in ('bytes', 'KB', 'MB', 'GB', 'TB'):
         if n_bytes < 1000.0:
             return f'{n_bytes:3.2f} {unit}'
-
         n_bytes /= 1000.0
-
-    # If we exit the loop, then n_bytes is larger than 1024 yottabytes.
     return 'pretty big'
 
 
 def decompress_file(infile, upload_filename):
     """
-    Opens gzip and bz2 files and returns the uncompressed data.
-    Uncompresses in pieces andand cuts off when limit is reached in order to
-    avoid 'zip bombs'.
-
-    Solution suggested by Mark Adler:
-    http://stackoverflow.com/questions/13622706/how-to-protect-myself-from-a-gzip-or-bzip2-bomb
-
-    The gist is that we decompress the file in chunks, counting the uncompressed
-    size of each and adding it to the total. If the filesize is OK, then
-    decompress the file and return data. This seems a little redundant, but
-    uncompressing the actual file in chunks and storing the data creates
-    crashing issues in the Docker container.
-
-    TODO: Bz2 doesn't have the same ability as zlib to read in chunks, so a bomb is
-          just going to cause a memory error. So, given the extra time it takes to
-          decompress a bz2, I'm just assembling the chunks on the fly instead of
-          unzipping a second time. Investigate a workaround for this at some point.
-
-    @param infile file object containing the data to decompress
-    @param upload_filename name of the file to decompress
-    @return a temporary file object containing the decompressed data
+    Opens gzip and bz2 files and returns a temporary file object.
+    Uses streaming to avoid memory spikes and protects against zip bombs.
     """
     app.logger.info("Decompressing file %s", upload_filename)
 
-    decompressed_file = tempfile.NamedTemporaryFile()
+    # delete=False allows the file to persist so netCDF4 can open it by path
+    decompressed_file = tempfile.NamedTemporaryFile(delete=False)
     extension = os.path.splitext(upload_filename)[-1]
 
-    # Determine the correct open function based on the type of decompression
     if extension == ".gz":
         open_fn = gzip.open
     elif extension == ".bz2":
@@ -105,107 +79,81 @@ def decompress_file(infile, upload_filename):
         data_length = 0
         reader = open_fn(infile)
 
-        while data_length < app.config['MAX_CONTENT_LENGTH']:
-            buf = reader.read(1024)
+        while True:
+            # Check against MAX_CONTENT_LENGTH before reading more
+            if data_length > app.config.get('MAX_CONTENT_LENGTH', 2 * 1024**3):
+                raise ValueError("Decompressed size exceeds limit.")
 
-            if len(buf) == 0:
+            buf = reader.read(CHUNK_SIZE)
+            if not buf:
                 break
 
             data_length += len(buf)
             decompressed_file.write(buf)
-        else:
-            decompressed_file.close()
-            return abort(
-                400, f"The decompressed file size is too large. "
-                     f"Max decompressed file size is: {format_byte_size(app.config['MAX_CONTENT_LENGTH'])}. "
-                     f"Filename: {upload_filename}"
-            )
-    except (BadGzipFile, OSError, ValueError, TypeError, IOError, EOFError) as err:
-        decompressed_file.close()
-        raise ValueError(
-            f'Failed to decompress {extension} file {upload_filename}, reason: {str(err)}.'
-        )
-    except MemoryError:
-        # Noticed that some bzip bombs cause memory errors. There doesn't
-        # seem to be a ton of great ways around this.
-        decompressed_file.close()
-        return abort(
-            400, f"The decompressed file size is too large. "
-                 f"Max decompressed file size is: {format_byte_size(app.config['MAX_CONTENT_LENGTH'])}. "
-                 f"Filename: {upload_filename}"
-        )
 
-    # Roll file pointer back to beginning of buffer now that decompression is complete
+    except Exception as err:
+        decompressed_file.close()
+        if os.path.exists(decompressed_file.name):
+            os.remove(decompressed_file.name)
+        raise ValueError(f'Failed to decompress {upload_filename}: {str(err)}')
+
     decompressed_file.seek(0)
-
     return decompressed_file
 
 
 def get_dataset_from_file(uploaded_file):
     """
-    Derives a netcdf4.Dataset object from the provided file upload dictionary.
-
-    @param uploaded_file open file handle to the data to convert.
+    Derives a netcdf4.Dataset object from the provided file upload.
+    Refactored to stream data to disk instead of loading 1.2GB into RAM.
     """
-    app.logger.info("Attempting to get dataset from uploaded file %s", uploaded_file)
+    app.logger.info("Attempting to get dataset from uploaded file %s", uploaded_file.filename)
 
     datafile_name = uploaded_file.filename
     check_valid_filename(datafile_name)
 
-    # uploaded_file is an instance of werkzeug.FileStorage, which only allows us
-    # to read the file contents but not reference a location on disk.
-    # Copy the uploaded file to a named temporary file, so we can provide a disk
-    # location when initializing the netCDF.Dataset object below.
-
-    # Since the CF suite checks the Dataset's filename for compliance,
-    # we need to make sure the original is incorporated into the name of the
-    # temporary file used to initialize the Dataset object below.
-    datafile = tempfile.NamedTemporaryFile(suffix=f"_{datafile_name}")
-    datafile.write(uploaded_file.read())
+    # Create a named temporary file to store the upload on disk
+    datafile = tempfile.NamedTemporaryFile(suffix=f"_{datafile_name}", delete=False)
+    
+    # STREAM the file from the request to the disk
+    shutil.copyfileobj(uploaded_file, datafile)
     datafile.seek(0)
 
-    # Calculate hash and file size now, prior to any potential file decompression
+    # Calculate hash and size from the disk file
     file_hash = hash_file(datafile)
     file_size = format_byte_size(getsize(datafile.name))
 
-    # Send compressed files to decompressor
+    # Handle compression
     if datafile_name.lower().endswith(('.gz', '.bz2')):
         try:
-            decompressed_file = decompress_file(datafile, datafile_name)
-        except ValueError as err:
-            return abort(
-                500, f'Failed to decompress file {datafile_name}, reason: {str(err)}.'
-            )
-        finally:
-            # Should no longer need the compressed version of file
+            decompressed_result = decompress_file(datafile, datafile_name)
+            # Close and remove the compressed version to free up disk space
             datafile.close()
-
-        datafile = decompressed_file
+            if os.path.exists(datafile.name):
+                os.remove(datafile.name)
+            datafile = decompressed_result
+        except ValueError as err:
+            return abort(500, f'Decompression error: {str(err)}')
 
     try:
+        # Open by filename (allows netCDF4 to use memory-mapping)
         return {
             'dataset': Dataset(datafile.name, 'r'),
             'hash': file_hash,
             'size': file_size,
-            'filename': datafile_name
+            'filename': datafile_name,
+            'temp_path': datafile.name # Keep track for later cleanup
         }
     except Exception as err:
-        return abort(
-            500, f"Error processing file {datafile_name}, reason: {str(err)}. "
-                 f"Please make sure it's a valid NetCDF file."
-        )
-    finally:
         datafile.close()
+        if os.path.exists(datafile.name):
+            os.remove(datafile.name)
+        return abort(500, f"NetCDF Error: {str(err)}")
 
 
 def check_valid_filename(filename):
     """
-    Checks if the provided file name conforms to one of the expected input types.
-
-    @param filename Name of the file to check
+    Checks if the provided file name conforms to expected types.
     """
-    if not filename.lower().endswith(('.gz', '.bz2', '.nc', '.hdf', '.h5', '.nc4')):
-        return abort(
-            500, f'File {filename} is not in an accepted data format. '
-                 f'Must be one of .gz, .bz2, .nc, .h5, .nc4 or .hdf.'
-        )
+    valid_exts = ('.gz', '.bz2', '.nc', '.hdf', '.h5', '.nc4')
+    if not filename.lower().endswith(valid_exts):
+        return abort(400, f'Unsupported file format. Must be one of: {", ".join(valid_exts)}')

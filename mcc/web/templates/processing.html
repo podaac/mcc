@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing Large File - MCC</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <script>
+        // Poll for task status every 5 seconds
+        function pollStatus() {
+            fetch('{{ check_status_url }}')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('status').textContent = data.status;
+                    
+                    if (data.status === 'SUCCESS') {
+                        if ('{{ response_type }}' === 'html') {
+                            window.location.href = '/results/' + '{{ task_id }}' + '?format=html';
+                        } else if ('{{ response_type }}' === 'pdf') {
+                            window.location.href = '/results/' + '{{ task_id }}' + '?format=pdf';
+                        } else {
+                            document.getElementById('result-container').innerHTML = 
+                                '<div class="alert alert-success">Processing complete! <a href="/results/' + 
+                                '{{ task_id }}' + '">View Results</a></div>';
+                        }
+                    } else if (data.status === 'FAILURE') {
+                        document.getElementById('result-container').innerHTML = 
+                            '<div class="alert alert-danger">Processing failed: ' + data.error + '</div>';
+                    } else {
+                        setTimeout(pollStatus, 5000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking status:', error);
+                    document.getElementById('result-container').innerHTML = 
+                        '<div class="alert alert-danger">Error checking status. Please try again later.</div>';
+                });
+        }
+
+        // Start polling when page loads
+        window.onload = function() {
+            pollStatus();
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Processing Large File</h1>
+        
+        <div class="alert alert-info">
+            <p><strong>File:</strong> {{ filename }}</p>
+            <p><strong>Size:</strong> {{ file_size }}</p>
+            <p><strong>Job ID:</strong> {{ job_id }}</p>
+            <p><strong>Status:</strong> <span id="status">Processing</span></p>
+        </div>
+        
+        <div class="progress">
+            <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%"></div>
+        </div>
+        
+        <div id="result-container" class="mt-4">
+            <p>Your file is being processed. This may take several minutes for large files.</p>
+            <p>You can leave this page and check back later using the job ID.</p>
+        </div>
+        
+        <div class="mt-4">
+            <a href="{{ homepage_url }}" class="btn btn-primary">Return to Homepage</a>
+        </div>
+    </div>
+</body>
+</html>
