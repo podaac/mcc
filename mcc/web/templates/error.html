@@ -39,6 +39,20 @@
           <h1>{{ error }}</h1>
           <p class="lead">{{ text }}</p>
           {% if description %}<p>{{ description }}</p>{% endif %}
+          <hr />
+          <div class="text-center">
+            <a href="{{ homepage_url }}"><h4>Return to Homepage</h4></a>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+          <ul class="list-inline text-center">
+            <span class="footer_box">
+              <span class="footer_env">{{ venue }}</span>
+              <span class="footer_ver">v{{ mcc_version }}</span>
+            </span>
+          </ul>
         </div>
       </div>
     </div>

@@ -38,6 +38,18 @@ from .tasks import process_large_file  # Asynchronous processing task
 # Initialize Flask application
 app = Flask(__name__)
 
+# Configure pdfkit options
+pdf_options = {
+    'page-size': 'A4',
+    'margin-top': '0.75in',
+    'margin-right': '0.75in',
+    'margin-bottom': '0.75in',
+    'margin-left': '0.75in',
+    'encoding': 'UTF-8',
+    'no-outline': None,
+    'enable-local-file-access': None
+}
+
 # Style options for whitespace in templated HTML code
 app.jinja_env.trim_blocks = True
 app.jinja_env.lstrip_blocks = True
@@ -63,7 +75,7 @@ app.config['LARGE_FILE_THRESHOLD'] = int(environ.get('LARGE_FILE_THRESHOLD', 107
 # Directory for storing large files during processing
 app.config['TEMP_FILE_DIR'] = environ.get('TEMP_FILE_DIR', '/tmp/mcc_large_files')
 
-# Create temporary directory if it doesn't exist
+# Ensure the temporary directory exists
 os.makedirs(app.config['TEMP_FILE_DIR'], exist_ok=True)
 
 # Register available compliance checkers
@@ -78,15 +90,45 @@ CHECKERS = {
 try:
     with open('/var/www/html/mcc/web/VERSION', 'r') as f:
         mcc_version = f.read().rstrip()
-except:
+except Exception as e:
+    app.logger.warning(f"Could not read VERSION file: {str(e)}. Using default version.")
     mcc_version = "1.0.0"  # Default version if VERSION file not found
 
+def calculate_file_hash(file_path):
+    """Calculate MD5 hash of a file in a memory-efficient way"""
+    try:
+        from hashlib import md5
+        with open(file_path, 'rb') as f:
+            hash_obj = md5()
+            # Read file in chunks to avoid memory issues with large files
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_obj.update(chunk)
+            return hash_obj.hexdigest()
+    except Exception as e:
+        app.logger.error(f"Error calculating hash for {file_path}: {str(e)}")
+        return None
+
 def stream_save_upload(uploaded_file, destination):
-    # Streams file uploads directly to disk without loading into memory
-    # Critical for handling multi-GB files efficiently
-    # Uses shutil.copyfileobj to stream in chunks instead of loading entire file
-    with open(destination, 'wb') as f:
-        shutil.copyfileobj(uploaded_file.stream, f)
+    """Streams file uploads directly to disk without loading into memory
+    Critical for handling multi-GB files efficiently
+    Uses shutil.copyfileobj to stream in chunks instead of loading entire file
+    
+    Args:
+        uploaded_file: The uploaded file object from request.files
+        destination: Path where the file should be saved
+        
+    Raises:
+        IOError: If there's an issue writing to the destination
+    """
+    try:
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
+        
+        with open(destination, 'wb') as f:
+            shutil.copyfileobj(uploaded_file.stream, f)
+    except IOError as e:
+        app.logger.error(f"Error saving uploaded file to {destination}: {str(e)}")
+        raise
 
 
 # Error handlers for HTTP response codes
@@ -110,7 +152,9 @@ def internal_server_error(err):
             error='Unable to read file',
             text="",
             description=err.description,
-            homepage_url=app.config['HomepageURL']
+            homepage_url=app.config['HomepageURL'],
+            venue=app.config['Venue'],
+            mcc_version=mcc_version
         )
         return ret, 500
     # Default to JSON-format response
@@ -131,7 +175,9 @@ def page_not_found(err):
             error='404 Page Not Found',
             text='Could not find page',
             description=err.description,
-            homepage_url=app.config['HomepageURL']
+            homepage_url=app.config['HomepageURL'],
+            venue=app.config['Venue'],
+            mcc_version=mcc_version
         )
         return ret, 404
     # Default to JSON-format response
@@ -152,7 +198,9 @@ def bad_request(err):
             error='There was a problem with your request',
             text='',
             description=err.description,
-            homepage_url=app.config['HomepageURL']
+            homepage_url=app.config['HomepageURL'],
+            venue=app.config['Venue'],
+            mcc_version=mcc_version
         )
         return ret, 400
     else:
@@ -182,12 +230,24 @@ def check():
         return abort(400, 'No file uploaded.')
 
     filename = uploaded_file.filename
+    if not filename or filename == '':
+        return abort(400, 'Invalid filename.')
+    
+    # Sanitize filename to prevent path traversal
+    filename = os.path.basename(filename)
     
     # Calculate size using stream pointer without reading content
     # This is more memory efficient than loading the file to check its size
-    uploaded_file.seek(0, os.SEEK_END)
-    file_size = uploaded_file.tell()
-    uploaded_file.seek(0)  # Reset pointer to beginning of file
+    try:
+        uploaded_file.seek(0, os.SEEK_END)
+        file_size = uploaded_file.tell()
+        uploaded_file.seek(0)  # Reset pointer to beginning of file
+        
+        if file_size == 0:
+            return abort(400, 'Empty file uploaded.')
+    except Exception as e:
+        app.logger.error(f"Error determining file size: {str(e)}")
+        return abort(400, 'Could not process uploaded file.')
 
     # Determine which checkers to run based on form input
     selected_checkers = {}
@@ -218,7 +278,15 @@ def check():
                 'check_status_url': url_for('check_status', task_id=task.id, _external=True)
             })
         # For HTML/PDF responses, show processing page with status updates
-        return render_template('processing.html', task_id=task.id, filename=filename)
+        return render_template('processing.html', 
+            task_id=task.id, 
+            filename=filename,
+            file_size=format_byte_size(file_size),
+            job_id=job_id,
+            response_type=resp_type,
+            check_status_url=url_for('check_status', task_id=task.id, _external=True),
+            homepage_url=app.config['HomepageURL']
+        )
 
     # SYNC PATH: For smaller files that can be processed immediately
     info = parse_post_arguments(request.form, request.files, CHECKERS)
@@ -235,7 +303,43 @@ def check():
 
     # Return JSON response if requested
     if resp_type == 'json':
-        return jsonify({'results': results, 'size': ds_container['size']})
+        return jsonify({'results': results, 'size': ds_container['size'], 'model': ds_data_model})
+    
+    # Clean up temporary files to avoid disk space issues
+    if 'temp_path' in ds_container and os.path.exists(ds_container['temp_path']):
+        try:
+            os.remove(ds_container['temp_path'])
+        except OSError:
+            app.logger.error(f"Failed to remove temp file: {ds_container['temp_path']}")
+    
+    # Calculate file hash for consistency with async results
+    file_hash = calculate_file_hash(info['file'])
+    
+    # Handle PDF response
+    if resp_type == 'pdf':
+        # Render the PDF template first
+        html = render_template('results_pdf.html',
+            results=results,
+            fn=filename,
+            model=ds_data_model,
+            size=format_byte_size(ds_container['size']),
+            hash=file_hash,
+            homepage_url=app.config['HomepageURL'],
+            mcc_version=mcc_version,
+            venue=app.config['Venue'],
+            selected_checkers=selected_checkers,
+            print_styles_css_path='static/css/print-styles.css'
+        )
+        
+        # Generate PDF from HTML using configured options
+        pdf = pdfkit.from_string(html, False, options=pdf_options)
+        
+        # Create response with PDF content
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename={filename}_compliance_report.pdf'
+        
+        return response
     
     # Clean up temporary files to avoid disk space issues
     if 'temp_path' in ds_container and os.path.exists(ds_container['temp_path']):
@@ -244,8 +348,22 @@ def check():
         except OSError:
             app.logger.error(f"Failed to remove temp file: {ds_container['temp_path']}")
         
+    # Calculate file hash for consistency with async results
+    file_hash = calculate_file_hash(info['file'])
+    
     # Return HTML results page
-    return render_template('results.html', results=results, fn=filename)
+    return render_template('results.html', 
+        results=results, 
+        fn=filename, 
+        model=ds_data_model,
+        size=format_byte_size(ds_container['size']),
+        hash=file_hash,
+        homepage_url=app.config['HomepageURL'],
+        mcc_version=mcc_version,
+        venue=app.config['Venue'],
+        selected_checkers=selected_checkers,
+        print_styles_css_path='static/css/print-styles.css'
+    )
 
 
 @app.route('/about')
@@ -257,7 +375,8 @@ def about():
         'about.html',
         checkers=[checker.ABOUT for checker in list(CHECKERS.values())],
         homepage_url=app.config['HomepageURL'],
-        mcc_version=str(mcc_version)
+        mcc_version=str(mcc_version),
+        venue=app.config['Venue']
     )
 
 
@@ -271,7 +390,8 @@ def about_api():
         'about_api.html',
         checkers={checker.ABOUT['short_name']: checker.ABOUT for checker in list(CHECKERS.values())},
         max_size=format_byte_size(app.config['MAX_CONTENT_LENGTH'],),
-        homepage_url=app.config['HomepageURL']
+        homepage_url=app.config['HomepageURL'],
+        venue=app.config['Venue']
     )
 
 
@@ -304,7 +424,34 @@ def get_results(task_id):
     if format_type == 'json':
         return jsonify(result)
     
-    # For HTML format, pass all result fields to the template
+    # Ensure required parameters are included
+    result.update({
+        'homepage_url': app.config['HomepageURL'],
+        'mcc_version': mcc_version,
+        'venue': app.config['Venue'],
+        'print_styles_css_path': 'static/css/print-styles.css'
+    })
+    
+    # Make sure selected_checkers is available
+    if 'selected_checkers' not in result:
+        result['selected_checkers'] = {}
+    
+    # Handle PDF format
+    if format_type == 'pdf':
+        # Render the PDF template
+        html = render_template('results_pdf.html', **result)
+        
+        # Generate PDF from HTML using configured options
+        pdf = pdfkit.from_string(html, False, options=pdf_options)
+        
+        # Create response with PDF content
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename={result["fn"]}_compliance_report.pdf'
+        
+        return response
+        
+    # Default to HTML format
     return render_template('results.html', **result)
 
 
@@ -315,12 +462,12 @@ def index():
     return render_template('index.html', 
         checkers=[checker.ABOUT for checker in list(CHECKERS.values())],
         max_ui_file_size=format_byte_size(app.config['UiMaxFileSize']),
+        max_ui_file_size_bytes=app.config['UiMaxFileSize'],
+        max_api_file_size=format_byte_size(app.config['MAX_CONTENT_LENGTH']),
+        max_api_file_size_bytes=app.config['MAX_CONTENT_LENGTH'],
         homepage_url=app.config['HomepageURL'],
-        mcc_version=mcc_version
+        mcc_version=mcc_version,
+        venue=app.config['Venue']
     )
 
-@app.errorhandler(413)
-def req_too_large(err):
-    # Handle 413 Request Entity Too Large errors
-    # Occurs when the uploaded file exceeds MAX_CONTENT_LENGTH
-    return jsonify({'error': 'File too large'}), 413
+# Note: Removed duplicate error handler for 413 status code

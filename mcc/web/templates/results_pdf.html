@@ -43,9 +43,15 @@
             <h1>Results for {{ fn }}</h1>
 
             <ul class="list-inline">
-              <li>md5 {{ hash }}</li>
-              <li>{{ size }}</li>
-              <li>{{ model }}</li>
+              {% if hash %}
+                <li>md5 {{ hash }}</li>
+              {% endif %}
+              {% if size %}
+                <li>{{ size }}</li>
+              {% endif %}
+              {% if model %}
+                <li>{{ model }}</li>
+              {% endif %}
             </ul>
           </div>
 

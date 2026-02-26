@@ -57,7 +57,9 @@
               {% if size %}
                 <li>{{ size }}</li>
               {% endif %}
-              <li>{{ model }}</li>
+              {% if model %}
+                <li>{{ model }}</li>
+              {% endif %}
             </ul>
           </div>
 
