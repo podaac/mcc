@@ -118,6 +118,10 @@ resource "aws_ecs_task_definition" "fargate_task" {
   cpu          = var.task_cpu
   memory       = var.task_memory
 
+  ephemeral_storage {
+    size_in_gib = 100
+  }
+
   execution_role_arn = aws_iam_role.fargate_task_execution_role.arn
   task_role_arn      = aws_iam_role.ecs_task_role.arn
   tags               = local.default_tags
