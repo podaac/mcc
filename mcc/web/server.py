@@ -313,6 +313,7 @@ def index():
     # Main landing page for the MCC service
     # Renders the index template with configuration information
     return render_template('index.html', 
+        checkers=[checker.ABOUT for checker in list(CHECKERS.values())],
         max_ui_file_size=format_byte_size(app.config['UiMaxFileSize']),
         homepage_url=app.config['HomepageURL'],
         mcc_version=mcc_version
