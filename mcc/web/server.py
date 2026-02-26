@@ -122,13 +122,37 @@ def stream_save_upload(uploaded_file, destination):
         IOError: If there's an issue writing to the destination
     """
     try:
-        # Ensure the directory exists
-        os.makedirs(os.path.dirname(destination), exist_ok=True)
+        # Log directory and file information
+        dir_path = os.path.dirname(destination)
+        app.logger.info(f"Saving upload to directory: {dir_path}")
+        app.logger.info(f"Directory exists: {os.path.exists(dir_path)}")
+        app.logger.info(f"Directory writable: {os.access(dir_path, os.W_OK) if os.path.exists(dir_path) else False}")
         
+        # Ensure the directory exists
+        os.makedirs(dir_path, exist_ok=True)
+        
+        # Log after directory creation
+        app.logger.info(f"After makedirs - Directory exists: {os.path.exists(dir_path)}")
+        
+        # Check if file already exists and is writable
+        if os.path.exists(destination):
+            app.logger.info(f"File already exists at {destination}, attempting to remove")
+            os.remove(destination)
+        
+        # Stream the file to disk
+        app.logger.info(f"Starting file stream to {destination}")
         with open(destination, 'wb') as f:
             shutil.copyfileobj(uploaded_file.stream, f)
+        
+        # Verify file was created
+        app.logger.info(f"File saved successfully: {os.path.exists(destination)}")
+        app.logger.info(f"File size: {os.path.getsize(destination) if os.path.exists(destination) else 'N/A'}")
+        
     except IOError as e:
-        app.logger.error(f"Error saving uploaded file to {destination}: {str(e)}")
+        app.logger.error(f"IOError saving uploaded file to {destination}: {str(e)}")
+        raise
+    except Exception as e:
+        app.logger.error(f"Unexpected error saving uploaded file to {destination}: {str(e)}")
         raise
 
 
@@ -226,29 +250,53 @@ def check():
         return abort(400, 'Missing "response" parameter (json, html, or pdf).')
 
     # Extract file without loading into RAM
-    uploaded_file = request.files.get('file-upload')
-    if not uploaded_file:
-        return abort(400, 'No file uploaded.')
-
-    filename = uploaded_file.filename
-    if not filename or filename == '':
-        return abort(400, 'Invalid filename.')
-    
-    # Sanitize filename to prevent path traversal
-    filename = os.path.basename(filename)
-    
-    # Calculate size using stream pointer without reading content
-    # This is more memory efficient than loading the file to check its size
     try:
-        uploaded_file.seek(0, os.SEEK_END)
-        file_size = uploaded_file.tell()
-        uploaded_file.seek(0)  # Reset pointer to beginning of file
+        app.logger.info(f"Processing upload request with response type: {resp_type}")
+        app.logger.info(f"Available files in request: {list(request.files.keys())}")
         
-        if file_size == 0:
-            return abort(400, 'Empty file uploaded.')
+        uploaded_file = request.files.get('file-upload')
+        if not uploaded_file:
+            app.logger.error("No file-upload in request.files")
+            return abort(400, 'No file uploaded.')
+
+        app.logger.info(f"File received: {uploaded_file.filename if uploaded_file else 'None'}")
+        
+        filename = uploaded_file.filename
+        if not filename or filename == '':
+            app.logger.error("Empty filename received")
+            return abort(400, 'Invalid filename.')
+        
+        # Sanitize filename to prevent path traversal
+        original_filename = filename
+        filename = os.path.basename(filename)
+        app.logger.info(f"Sanitized filename: {original_filename} -> {filename}")
+        
+        # Calculate size using stream pointer without reading content
+        # This is more memory efficient than loading the file to check its size
+        try:
+            uploaded_file.seek(0, os.SEEK_END)
+            file_size = uploaded_file.tell()
+            uploaded_file.seek(0)  # Reset pointer to beginning of file
+            
+            app.logger.info(f"File size: {file_size} bytes ({format_byte_size(file_size)})")
+            
+            if file_size == 0:
+                app.logger.error("Empty file uploaded (zero bytes)")
+                return abort(400, 'Empty file uploaded.')
+        except Exception as e:
+            app.logger.error(f"Error determining file size: {str(e)}")
+            return abort(400, 'Could not process uploaded file.')
     except Exception as e:
-        app.logger.error(f"Error determining file size: {str(e)}")
-        return abort(400, 'Could not process uploaded file.')
+        app.logger.error(f"Unexpected error during file upload processing: {str(e)}")
+        return render_template(
+            'error.html',
+            error='Unable to process file',
+            text="An unexpected error occurred while processing your file.",
+            description=str(e),
+            homepage_url=app.config['HomepageURL'],
+            venue=app.config['Venue'],
+            mcc_version=mcc_version
+        ), 500
 
     # Determine which checkers to run based on form input
     selected_checkers = {}
@@ -264,20 +312,50 @@ def check():
         try:
             # Generate unique ID for this job
             job_id = str(uuid.uuid4())
-            temp_path = os.path.join(app.config['TEMP_FILE_DIR'], f"{job_id}_{filename}")
+            app.logger.info(f"Generated job ID: {job_id} for large file processing")
+            
+            # Create a simple filename without special characters for temp storage
+            safe_filename = ''.join(c for c in filename if c.isalnum() or c in '._-')
+            if not safe_filename:
+                safe_filename = 'upload.nc'  # Default name if all characters were filtered out
+                
+            temp_path = os.path.join(app.config['TEMP_FILE_DIR'], f"{job_id}_{safe_filename}")
+            app.logger.info(f"Temp file path: {temp_path}")
+            
+            # Verify temp directory exists and is writable
+            temp_dir = os.path.dirname(temp_path)
+            if not os.path.exists(temp_dir):
+                app.logger.info(f"Creating temp directory: {temp_dir}")
+                os.makedirs(temp_dir, exist_ok=True)
+                
+            # Double-check directory exists and is writable
+            if not os.path.exists(temp_dir):
+                raise IOError(f"Failed to create temp directory: {temp_dir}")
+            if not os.access(temp_dir, os.W_OK):
+                raise IOError(f"Temp directory is not writable: {temp_dir}")
             
             # Stream file directly to disk without loading into memory
+            app.logger.info(f"Streaming file to temp path: {temp_path}")
             stream_save_upload(uploaded_file, temp_path)
             
+            # Verify file was saved successfully
+            if not os.path.exists(temp_path):
+                raise IOError(f"Failed to save file to {temp_path}")
+                
+            app.logger.info(f"File saved successfully, size: {os.path.getsize(temp_path)} bytes")
+            
             # Start asynchronous processing task
+            app.logger.info(f"Starting async processing task for {temp_path}")
             task = process_large_file.delay(temp_path, filename, selected_checkers)
+            app.logger.info(f"Task created with ID: {task.id}")
+            
         except Exception as e:
             app.logger.error(f"Error processing large file upload: {str(e)}")
             return render_template(
                 'error.html',
                 error='Unable to process file',
                 text=f"There was a problem processing your file",
-                description="Please try again with a smaller file or contact support.",
+                description=f"Error details: {str(e)}",
                 homepage_url=app.config['HomepageURL'],
                 venue=app.config['Venue'],
                 mcc_version=mcc_version
