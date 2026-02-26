@@ -191,9 +191,31 @@ DISABLE TAG -->
                   <p>
                     <em>Note that you need to append an '@' to the beginning of the filename in the CURL request when using the file-upload option.</em>
                   </p>
+                  <h4>Basic Examples</h4>
                   <pre>curl -L -F ACDD=on -F ACDD-version=1.3 -F file-upload=@/home/user/granule.nc -F response=json {{ homepage_url }}/check
 curl -L -F CF=on -F CF-version=1.7 -F file-upload=@/home/user/granule.nc -F response=html {{ homepage_url }}/check
 curl -L -F GDS2=on -F GDS2-parameter=L4 -F file-upload=@/home/user/granule.nc -F response=pdf {{ homepage_url }}/check</pre>
+                  
+                  <h4>With Progress Reporting and Extended Timeouts</h4>
+                  <p>
+                    <em>For large files, you may want to show progress and set longer timeouts:</em>
+                  </p>
+                  <pre>curl -L --progress-bar --connect-timeout 300 --max-time 3600 --keepalive-time 3600 \
+    -F ACDD=on -F ACDD-version=1.3 -F file-upload=@/home/user/granule.nc -F response=json {{ homepage_url }}/check</pre>
+                  
+                  <h4>With Detailed Progress</h4>
+                  <pre>curl -L -v --progress-meter --connect-timeout 300 --max-time 3600 --keepalive-time 3600 \
+    -F CF=on -F CF-version=1.7 -F file-upload=@/home/user/granule.nc -F response=html {{ homepage_url }}/check</pre>
+                  
+                  <h4>Options Explained</h4>
+                  <ul>
+                    <li><code>--progress-bar</code>: Display a simple progress bar</li>
+                    <li><code>--progress-meter</code>: Display detailed progress information</li>
+                    <li><code>-v</code>: Verbose output showing request and response headers</li>
+                    <li><code>--connect-timeout 300</code>: Wait up to 300 seconds when connecting</li>
+                    <li><code>--max-time 3600</code>: Allow the whole operation to take up to 3600 seconds (1 hour)</li>
+                    <li><code>--keepalive-time 3600</code>: Keep the connection alive for 3600 seconds</li>
+                  </ul>
                 </div>
               </div>
             </div>
