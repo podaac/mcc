@@ -251,43 +251,78 @@ def check():
 
     # Extract file without loading into RAM
     try:
-        app.logger.info(f"Processing upload request with response type: {resp_type}")
-        app.logger.info(f"Available files in request: {list(request.files.keys())}")
+        # Print all request information for debugging
+        app.logger.info(f"Request method: {request.method}")
+        app.logger.info(f"Request content type: {request.content_type}")
+        app.logger.info(f"Response type: {resp_type}")
+        app.logger.info(f"Form data: {list(request.form.keys())}")
+        app.logger.info(f"Files in request: {list(request.files.keys())}")
         
-        uploaded_file = request.files.get('file-upload')
+        # Check all possible file field names
+        possible_file_fields = ['file-upload', 'file', 'upload', 'fileUpload']
+        uploaded_file = None
+        
+        for field in possible_file_fields:
+            if field in request.files:
+                uploaded_file = request.files[field]
+                app.logger.info(f"Found file in field: {field}")
+                break
+                
         if not uploaded_file:
-            app.logger.error("No file-upload in request.files")
-            return abort(400, 'No file uploaded.')
+            app.logger.error("No file found in any expected field")
+            return abort(400, 'No file uploaded. Please select a file to check.')
 
         app.logger.info(f"File received: {uploaded_file.filename if uploaded_file else 'None'}")
         
         filename = uploaded_file.filename
         if not filename or filename == '':
             app.logger.error("Empty filename received")
-            return abort(400, 'Invalid filename.')
+            return abort(400, 'Invalid filename. Please select a file with a valid name.')
         
-        # Sanitize filename to prevent path traversal
-        original_filename = filename
-        filename = os.path.basename(filename)
-        app.logger.info(f"Sanitized filename: {original_filename} -> {filename}")
+        # Use a very simple filename sanitization
+        safe_filename = os.path.basename(filename)
+        app.logger.info(f"Using filename: {safe_filename}")
         
-        # Calculate size using stream pointer without reading content
-        # This is more memory efficient than loading the file to check its size
+        # Get file size
         try:
-            uploaded_file.seek(0, os.SEEK_END)
-            file_size = uploaded_file.tell()
-            uploaded_file.seek(0)  # Reset pointer to beginning of file
+            # Save to a temporary file first to avoid stream issues
+            temp_file = os.path.join('/tmp', f"mcc_upload_{int(time.time())}_{safe_filename}")
+            app.logger.info(f"Saving to temporary file: {temp_file}")
             
-            app.logger.info(f"File size: {file_size} bytes ({format_byte_size(file_size)})")
+            # Ensure /tmp exists and is writable
+            if not os.path.exists('/tmp'):
+                app.logger.error("/tmp directory does not exist")
+                os.makedirs('/tmp', exist_ok=True)
+                
+            if not os.access('/tmp', os.W_OK):
+                app.logger.error("/tmp directory is not writable")
+                return abort(500, 'Server configuration error: temporary directory is not writable')
+                
+            # Save the file
+            uploaded_file.save(temp_file)
+            
+            # Check if file exists and get size
+            if not os.path.exists(temp_file):
+                app.logger.error(f"Failed to save file to {temp_file}")
+                return abort(500, 'Failed to save uploaded file')
+                
+            file_size = os.path.getsize(temp_file)
+            app.logger.info(f"File saved successfully, size: {file_size} bytes ({format_byte_size(file_size)})")
             
             if file_size == 0:
+                os.remove(temp_file)
                 app.logger.error("Empty file uploaded (zero bytes)")
-                return abort(400, 'Empty file uploaded.')
+                return abort(400, 'Empty file uploaded. Please select a valid file.')
+                
+            # Replace the uploaded_file with the saved file path for further processing
+            info = {'file': temp_file}
+            
         except Exception as e:
-            app.logger.error(f"Error determining file size: {str(e)}")
-            return abort(400, 'Could not process uploaded file.')
+            app.logger.error(f"Error processing uploaded file: {str(e)}")
+            return abort(400, f'Could not process uploaded file: {str(e)}')
+            
     except Exception as e:
-        app.logger.error(f"Unexpected error during file upload processing: {str(e)}")
+        app.logger.error(f"Unexpected error during file upload: {str(e)}")
         return render_template(
             'error.html',
             error='Unable to process file',
@@ -306,6 +341,8 @@ def check():
         selected_checkers['CF-version'] = request_dict.get('CF-version') or CF.DEFAULT_VERSION
     if request_dict.get('GDS2') == 'on':
         selected_checkers['GDS2-parameter'] = request_dict.get('GDS2-parameter') or GDS2.DEFAULT_VERSION
+        
+    app.logger.info(f"Selected checkers: {selected_checkers}")
 
     # ASYNC PATH: For files larger than the threshold (default: 1GB)
     if file_size > app.config['LARGE_FILE_THRESHOLD']:
@@ -380,13 +417,46 @@ def check():
         )
 
     # SYNC PATH: For smaller files that can be processed immediately
-    info = parse_post_arguments(request.form, request.files, CHECKERS)
-    ds_container = get_dataset_from_file(info['file'])  # Memory-efficient dataset loading
-    
-    # Run selected checkers against the dataset
-    results = []
-    for checker in info['checkers']:
-        results.append(checker.run(ds_container['dataset']))
+    try:
+        app.logger.info(f"Processing file synchronously: {temp_file}")
+        # We already have the file saved to temp_file
+        ds_container = get_dataset_from_file(temp_file)  # Memory-efficient dataset loading
+        app.logger.info(f"Dataset loaded successfully from {temp_file}")
+        
+        # Initialize checkers based on selected_checkers
+        checker_instances = []
+        if 'ACDD-version' in selected_checkers:
+            app.logger.info(f"Adding ACDD checker with version {selected_checkers['ACDD-version']}")
+            checker_instances.append(ACDD(selected_checkers['ACDD-version']))
+        if 'CF-version' in selected_checkers:
+            app.logger.info(f"Adding CF checker with version {selected_checkers['CF-version']}")
+            checker_instances.append(CF(selected_checkers['CF-version']))
+        if 'GDS2-parameter' in selected_checkers:
+            app.logger.info(f"Adding GDS2 checker with parameter {selected_checkers['GDS2-parameter']}")
+            checker_instances.append(GDS2(selected_checkers['GDS2-parameter']))
+            
+        # If no checkers were selected, use all available checkers with default versions
+        if not checker_instances:
+            app.logger.info("No checkers selected, using all with default versions")
+            checker_instances = [ACDD(), CF(), GDS2()]
+            
+        # Run selected checkers against the dataset
+        results = []
+        for checker in checker_instances:
+            app.logger.info(f"Running checker: {checker.__class__.__name__}")
+            results.append(checker.run(ds_container['dataset']))
+            
+    except Exception as e:
+        app.logger.error(f"Error processing dataset: {str(e)}")
+        return render_template(
+            'error.html',
+            error='Unable to read file',
+            text="Failed to process the uploaded file.",
+            description=str(e),
+            homepage_url=app.config['HomepageURL'],
+            venue=app.config['Venue'],
+            mcc_version=mcc_version
+        ), 500
     
     # Get data model and close dataset to free resources
     ds_data_model = ds_container['dataset'].data_model
