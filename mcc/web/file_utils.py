@@ -23,26 +23,33 @@ app = current_app
 logger = logging.getLogger(__name__)
 
 
-def hash_file(infile, hasher=None, blocksize=65536):
+def hash_file(infile, hasher=None, blocksize=8388608):  # 8MB buffer (8 * 1024 * 1024)
     """
-    Incrementally generate file hashes (suitable for large files).
+    Incrementally generate file hashes (suitable for very large files).
+    Uses a large buffer size (8MB) for better performance with multi-GB files.
 
     @param infile a python file-like object
     @param hasher a hasher function from hashlib library (e.g. md5, sha256, ...)
-    @param blocksize an integer of bytes to read into the hash at a time
+    @param blocksize an integer of bytes to read into the hash at a time (default: 8MB)
     @return a hexdigest of the hash based on the hasher
     """
     if hasher is None:
         hasher = md5()
 
+    # Save current file position
+    current_pos = infile.tell()
+    
+    # Go to beginning of file
+    infile.seek(0)
+    
+    # Read and hash in chunks
     buf = infile.read(blocksize)
-
     while len(buf) > 0:
         hasher.update(buf)
         buf = infile.read(blocksize)
 
-    # Reset file buffer back to starting position
-    infile.seek(0)
+    # Reset file buffer back to original position
+    infile.seek(current_pos)
 
     return hasher.hexdigest()
 
@@ -67,22 +74,8 @@ def format_byte_size(n_bytes):
 def decompress_file(infile, upload_filename):
     """
     Opens gzip and bz2 files and returns the uncompressed data.
-    Uncompresses in pieces andand cuts off when limit is reached in order to
-    avoid 'zip bombs'.
-
-    Solution suggested by Mark Adler:
-    http://stackoverflow.com/questions/13622706/how-to-protect-myself-from-a-gzip-or-bzip2-bomb
-
-    The gist is that we decompress the file in chunks, counting the uncompressed
-    size of each and adding it to the total. If the filesize is OK, then
-    decompress the file and return data. This seems a little redundant, but
-    uncompressing the actual file in chunks and storing the data creates
-    crashing issues in the Docker container.
-
-    TODO: Bz2 doesn't have the same ability as zlib to read in chunks, so a bomb is
-          just going to cause a memory error. So, given the extra time it takes to
-          decompress a bz2, I'm just assembling the chunks on the fly instead of
-          unzipping a second time. Investigate a workaround for this at some point.
+    Optimized for handling large files (4GB+) efficiently.
+    Uncompresses in pieces and cuts off when limit is reached to avoid 'zip bombs'.
 
     @param infile file object containing the data to decompress
     @param upload_filename name of the file to decompress
@@ -90,8 +83,10 @@ def decompress_file(infile, upload_filename):
     """
     app.logger.info("Decompressing file %s", upload_filename)
 
-    decompressed_file = tempfile.NamedTemporaryFile()
-    extension = os.path.splitext(upload_filename)[-1]
+    # Use the configured temporary directory for large file processing
+    temp_dir = app.config.get('TEMP_FILE_DIR', tempfile.gettempdir())
+    decompressed_file = tempfile.NamedTemporaryFile(dir=temp_dir)
+    extension = os.path.splitext(upload_filename)[-1].lower()
 
     # Determine the correct open function based on the type of decompression
     if extension == ".gz":
@@ -101,12 +96,16 @@ def decompress_file(infile, upload_filename):
     else:
         raise ValueError(f"Unknown file extension ({extension}) for decompression")
 
+    # Use a larger buffer size for better performance with large files
+    buffer_size = 8 * 1024 * 1024  # 8MB buffer
+
     try:
         data_length = 0
         reader = open_fn(infile)
 
+        # Stream decompression with a larger buffer
         while data_length < app.config['MAX_CONTENT_LENGTH']:
-            buf = reader.read(1024)
+            buf = reader.read(buffer_size)
 
             if len(buf) == 0:
                 break
@@ -114,29 +113,34 @@ def decompress_file(infile, upload_filename):
             data_length += len(buf)
             decompressed_file.write(buf)
         else:
+            # If we exit the loop without breaking, the file is too large
             decompressed_file.close()
             return abort(
                 400, f"The decompressed file size is too large. "
                      f"Max decompressed file size is: {format_byte_size(app.config['MAX_CONTENT_LENGTH'])}. "
                      f"Filename: {upload_filename}"
             )
+            
+        # Close the reader to free resources
+        reader.close()
+        
     except (BadGzipFile, OSError, ValueError, TypeError, IOError, EOFError) as err:
         decompressed_file.close()
         raise ValueError(
             f'Failed to decompress {extension} file {upload_filename}, reason: {str(err)}.'
         )
     except MemoryError:
-        # Noticed that some bzip bombs cause memory errors. There doesn't
-        # seem to be a ton of great ways around this.
+        # Handle memory errors from bzip bombs
         decompressed_file.close()
         return abort(
-            400, f"The decompressed file size is too large. "
+            400, f"The decompressed file size is too large or caused a memory error. "
                  f"Max decompressed file size is: {format_byte_size(app.config['MAX_CONTENT_LENGTH'])}. "
                  f"Filename: {upload_filename}"
         )
 
     # Roll file pointer back to beginning of buffer now that decompression is complete
     decompressed_file.seek(0)
+    app.logger.info(f"Successfully decompressed {upload_filename} to size {format_byte_size(data_length)}")
 
     return decompressed_file
 
@@ -144,24 +148,55 @@ def decompress_file(infile, upload_filename):
 def get_dataset_from_file(uploaded_file):
     """
     Derives a netcdf4.Dataset object from the provided file upload dictionary.
+    Optimized for handling large files (4GB+) efficiently.
 
-    @param uploaded_file open file handle to the data to convert.
+    @param uploaded_file open file handle or path to the data to convert.
     """
     app.logger.info("Attempting to get dataset from uploaded file %s", uploaded_file)
-
-    datafile_name = uploaded_file.filename
+    
+    # Handle both file paths and file objects
+    if isinstance(uploaded_file, str):
+        # It's a file path
+        datafile_name = os.path.basename(uploaded_file)
+        is_path = True
+    else:
+        # It's a file object
+        datafile_name = uploaded_file.filename
+        is_path = False
+    
     check_valid_filename(datafile_name)
-
-    # uploaded_file is an instance of werkzeug.FileStorage, which only allows us
-    # to read the file contents but not reference a location on disk.
-    # Copy the uploaded file to a named temporary file, so we can provide a disk
-    # location when initializing the netCDF.Dataset object below.
-
-    # Since the CF suite checks the Dataset's filename for compliance,
-    # we need to make sure the original is incorporated into the name of the
-    # temporary file used to initialize the Dataset object below.
-    datafile = tempfile.NamedTemporaryFile(suffix=f"_{datafile_name}")
-    datafile.write(uploaded_file.read())
+    
+    # For large files, we want to avoid loading the entire file into memory
+    # Instead, we'll use a temporary file and stream the data in chunks
+    
+    # Use the configured temporary directory for large file processing
+    temp_dir = app.config.get('TEMP_FILE_DIR', tempfile.gettempdir())
+    
+    # Create a named temporary file in the specified directory
+    datafile = tempfile.NamedTemporaryFile(dir=temp_dir, suffix=f"_{datafile_name}")
+    
+    # Stream the file in chunks to avoid memory issues
+    if is_path:
+        # If it's a path, open the file and copy it
+        with open(uploaded_file, 'rb') as src_file:
+            # Use a larger buffer size (8MB) for faster copying of large files
+            buffer_size = 8 * 1024 * 1024  # 8MB buffer
+            while True:
+                buffer = src_file.read(buffer_size)
+                if not buffer:
+                    break
+                datafile.write(buffer)
+    else:
+        # If it's a file object, stream from it
+        # Use a larger buffer size (8MB) for faster copying of large files
+        buffer_size = 8 * 1024 * 1024  # 8MB buffer
+        while True:
+            buffer = uploaded_file.read(buffer_size)
+            if not buffer:
+                break
+            datafile.write(buffer)
+    
+    # Reset file pointer to beginning
     datafile.seek(0)
 
     # Calculate hash and file size now, prior to any potential file decompression

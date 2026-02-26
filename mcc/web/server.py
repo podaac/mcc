@@ -7,7 +7,9 @@ Flask server front end for the MCC service.
 
 """
 
+import os
 import time
+import logging
 from os import environ
 from os.path import join
 
@@ -20,6 +22,11 @@ from checker.gds2 import GDS2
 from .file_utils import format_byte_size, get_dataset_from_file
 from .form_utils import parse_post_arguments
 from .json_utils import CustomJSONEncoder
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, 
+                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -41,6 +48,20 @@ app.config['HomepageURL'] = environ['HomepageURL']
 
 # Venue that MCC is deployed to (SIT, UAT, or OPS)
 app.config['Venue'] = str(environ['Venue'])
+
+# Temporary directory for file processing
+app.config['TEMP_FILE_DIR'] = environ.get('TempFileLocation', '/tmp')
+
+# Ensure the temporary directory exists and is writable
+if not os.path.exists(app.config['TEMP_FILE_DIR']):
+    try:
+        os.makedirs(app.config['TEMP_FILE_DIR'], exist_ok=True)
+        logger.info(f"Created temporary directory: {app.config['TEMP_FILE_DIR']}")
+    except Exception as e:
+        logger.warning(f"Error creating temporary directory {app.config['TEMP_FILE_DIR']}: {str(e)}")
+
+if not os.access(app.config['TEMP_FILE_DIR'], os.W_OK):
+    logger.warning(f"Temporary directory {app.config['TEMP_FILE_DIR']} is not writable")
 
 # Mapping of checker short names to CheckSuite implementations.
 # This could be easily kept up-to-date by inspection of a module, but
