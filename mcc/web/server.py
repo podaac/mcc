@@ -73,7 +73,8 @@ app.config['Venue'] = str(environ.get('Venue', 'SIT'))
 app.config['LARGE_FILE_THRESHOLD'] = int(environ.get('LARGE_FILE_THRESHOLD', 1073741824))
 
 # Directory for storing large files during processing
-app.config['TEMP_FILE_DIR'] = environ.get('TEMP_FILE_DIR', '/tmp/mcc_large_files')
+# Use standard /tmp which is guaranteed to be writable in most environments
+app.config['TEMP_FILE_DIR'] = environ.get('TEMP_FILE_DIR', '/tmp')
 
 # Ensure the temporary directory exists
 os.makedirs(app.config['TEMP_FILE_DIR'], exist_ok=True)
@@ -260,15 +261,27 @@ def check():
 
     # ASYNC PATH: For files larger than the threshold (default: 1GB)
     if file_size > app.config['LARGE_FILE_THRESHOLD']:
-        # Generate unique ID for this job
-        job_id = str(uuid.uuid4())
-        temp_path = os.path.join(app.config['TEMP_FILE_DIR'], f"{job_id}_{filename}")
-        
-        # Stream file directly to disk without loading into memory
-        stream_save_upload(uploaded_file, temp_path)
-        
-        # Start asynchronous processing task
-        task = process_large_file.delay(temp_path, filename, selected_checkers)
+        try:
+            # Generate unique ID for this job
+            job_id = str(uuid.uuid4())
+            temp_path = os.path.join(app.config['TEMP_FILE_DIR'], f"{job_id}_{filename}")
+            
+            # Stream file directly to disk without loading into memory
+            stream_save_upload(uploaded_file, temp_path)
+            
+            # Start asynchronous processing task
+            task = process_large_file.delay(temp_path, filename, selected_checkers)
+        except Exception as e:
+            app.logger.error(f"Error processing large file upload: {str(e)}")
+            return render_template(
+                'error.html',
+                error='Unable to process file',
+                text=f"There was a problem processing your file",
+                description="Please try again with a smaller file or contact support.",
+                homepage_url=app.config['HomepageURL'],
+                venue=app.config['Venue'],
+                mcc_version=mcc_version
+            ), 500
         
         # Return appropriate response based on requested format
         if resp_type == 'json':
@@ -317,29 +330,48 @@ def check():
     
     # Handle PDF response
     if resp_type == 'pdf':
-        # Render the PDF template first
-        html = render_template('results_pdf.html',
-            results=results,
-            fn=filename,
-            model=ds_data_model,
-            size=format_byte_size(ds_container['size']),
-            hash=file_hash,
-            homepage_url=app.config['HomepageURL'],
-            mcc_version=mcc_version,
-            venue=app.config['Venue'],
-            selected_checkers=selected_checkers,
-            print_styles_css_path='static/css/print-styles.css'
-        )
-        
-        # Generate PDF from HTML using configured options
-        pdf = pdfkit.from_string(html, False, options=pdf_options)
-        
-        # Create response with PDF content
-        response = make_response(pdf)
-        response.headers['Content-Type'] = 'application/pdf'
-        response.headers['Content-Disposition'] = f'attachment; filename={filename}_compliance_report.pdf'
-        
-        return response
+        try:
+            # Render the PDF template first
+            html = render_template('results_pdf.html',
+                results=results,
+                fn=filename,
+                model=ds_data_model,
+                size=format_byte_size(ds_container['size']),
+                hash=file_hash,
+                homepage_url=app.config['HomepageURL'],
+                mcc_version=mcc_version,
+                venue=app.config['Venue'],
+                selected_checkers=selected_checkers,
+                print_styles_css_path='static/css/print-styles.css'
+            )
+            
+            # Generate PDF from HTML using configured options
+            pdf = pdfkit.from_string(html, False, options=pdf_options)
+            
+            # Create response with PDF content
+            response = make_response(pdf)
+            response.headers['Content-Type'] = 'application/pdf'
+            response.headers['Content-Disposition'] = f'attachment; filename={filename}_compliance_report.pdf'
+            
+            return response
+        except Exception as e:
+            app.logger.error(f"PDF generation failed: {str(e)}")
+            # Fall back to HTML if PDF generation fails
+            app.logger.info("Falling back to HTML format due to PDF generation failure")
+            
+            # Return HTML results page instead
+            return render_template('results.html', 
+                results=results, 
+                fn=filename, 
+                model=ds_data_model,
+                size=format_byte_size(ds_container['size']),
+                hash=file_hash,
+                homepage_url=app.config['HomepageURL'],
+                mcc_version=mcc_version,
+                venue=app.config['Venue'],
+                selected_checkers=selected_checkers,
+                print_styles_css_path='static/css/print-styles.css'
+            )
     
     # Clean up temporary files to avoid disk space issues
     if 'temp_path' in ds_container and os.path.exists(ds_container['temp_path']):
@@ -438,18 +470,24 @@ def get_results(task_id):
     
     # Handle PDF format
     if format_type == 'pdf':
-        # Render the PDF template
-        html = render_template('results_pdf.html', **result)
-        
-        # Generate PDF from HTML using configured options
-        pdf = pdfkit.from_string(html, False, options=pdf_options)
-        
-        # Create response with PDF content
-        response = make_response(pdf)
-        response.headers['Content-Type'] = 'application/pdf'
-        response.headers['Content-Disposition'] = f'attachment; filename={result["fn"]}_compliance_report.pdf'
-        
-        return response
+        try:
+            # Render the PDF template
+            html = render_template('results_pdf.html', **result)
+            
+            # Generate PDF from HTML using configured options
+            pdf = pdfkit.from_string(html, False, options=pdf_options)
+            
+            # Create response with PDF content
+            response = make_response(pdf)
+            response.headers['Content-Type'] = 'application/pdf'
+            response.headers['Content-Disposition'] = f'attachment; filename={result["fn"]}_compliance_report.pdf'
+            
+            return response
+        except Exception as e:
+            app.logger.error(f"Async PDF generation failed: {str(e)}")
+            # Fall back to HTML if PDF generation fails
+            app.logger.info("Falling back to HTML format due to PDF generation failure")
+            # Continue to HTML rendering below
         
     # Default to HTML format
     return render_template('results.html', **result)
