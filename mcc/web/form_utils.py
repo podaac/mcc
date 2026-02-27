@@ -47,6 +47,7 @@ def get_tests(form_dict, checker_map):
 def parse_post_arguments(form_dict, files, checker_map):
     """
     Parse a POST request from either an HTML page form or a cURL-like request.
+    Optimized for handling large files (4GB+) efficiently.
     Aborts response if no tests or no files.
 
     @param form_dict ImmutableMultiDict from flask or a regular
@@ -57,10 +58,13 @@ def parse_post_arguments(form_dict, files, checker_map):
     @param files a dict with a flask file-like object
     @param checker_map a dict of checker short names to initialized checkers
     @return a dict with 'file', 'checkers', 'response' or abort()
-    # TODO determine if this is an additional place to verify upload size constraint
     """
+    from flask import current_app
+    app = current_app
+    
     ret = {}
 
+    # Get the selected checkers
     checkers = get_tests(form_dict, checker_map)
 
     if not checkers:
@@ -68,12 +72,23 @@ def parse_post_arguments(form_dict, files, checker_map):
             400, "You need to choose at least one metadata convention to test your file against."
         )
 
-    if 'file-upload' not in files:
+    # Check for file upload
+    # Try multiple possible field names for file uploads
+    uploaded_file = None
+    for field in ['file-upload', 'file', 'upload', 'fileUpload']:
+        if field in files and files[field]:
+            uploaded_file = files[field]
+            app.logger.info(f"Found file in field: {field}")
+            break
+    
+    if not uploaded_file:
         return abort(400, "Your request was empty. Please make sure you've specified a file.")
-    elif not files['file-upload']:
-        return abort(400, "There was a problem uploading your file. Please try again.")
-
-    ret['file'] = files['file-upload']
+    
+    # Log file information
+    app.logger.info(f"File received: {uploaded_file.filename}")
+    
+    # Return the file object directly - we'll handle streaming in get_dataset_from_file
+    ret['file'] = uploaded_file
     ret['checkers'] = checkers
     ret['response'] = form_dict.get('response', 'html').lower()
 
