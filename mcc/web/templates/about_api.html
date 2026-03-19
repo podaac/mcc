@@ -191,24 +191,36 @@ DISABLE TAG -->
                   <p>
                     <em>Note that you need to append an '@' to the beginning of the filename in the CURL request when using the file-upload option.</em>
                   </p>
+                  <p>
+                    <em>When requesting HTML or PDF output, be sure to specify an output file with <code>-o</code>. Otherwise the response body will be printed to the terminal instead of being saved to a file. You may also use <code>-o</code> for JSON responses if you want to save the output.</em>
+                  </p>
+
                   <h4>Basic Examples</h4>
-                  <pre>curl -L -F ACDD=on -F ACDD-version=1.3 -F file-upload=@/home/user/granule.nc -F response=json {{ homepage_url }}/check
-curl -L -F CF=on -F CF-version=1.7 -F file-upload=@/home/user/granule.nc -F response=html {{ homepage_url }}/check
-curl -L -F GDS2=on -F GDS2-parameter=L4 -F file-upload=@/home/user/granule.nc -F response=pdf {{ homepage_url }}/check</pre>
-                  
+                  <pre>curl -L -F ACDD=on -F ACDD-version=1.3 -F file-upload=@/home/user/granule.nc -F response=json -o result.json {{ homepage_url }}/check
+curl -L -F CF=on -F CF-version=1.7 -F file-upload=@/home/user/granule.nc -F response=html -o result.html {{ homepage_url }}/check
+curl -L -F GDS2=on -F GDS2-parameter=L4 -F file-upload=@/home/user/granule.nc -F response=pdf -o result.pdf {{ homepage_url }}/check</pre>
+
                   <h4>With Progress Reporting and Extended Timeouts</h4>
                   <p>
-                    <em>For large files, you may want to show progress and set longer timeouts:</em>
+                    <em>For large files, you may want to show progress, set longer timeouts, and save the response to an output file:</em>
                   </p>
                   <pre>curl -L --progress-bar --connect-timeout 300 --max-time 3600 --keepalive-time 3600 \
-    -F ACDD=on -F ACDD-version=1.3 -F file-upload=@/home/user/granule.nc -F response=json {{ homepage_url }}/check</pre>
-                  
+    -F ACDD=on -F ACDD-version=1.3 -F file-upload=@/home/user/granule.nc -F response=json \
+    -o result.json {{ homepage_url }}/check</pre>
+
                   <h4>With Detailed Progress</h4>
                   <pre>curl -L -v --progress-meter --connect-timeout 300 --max-time 3600 --keepalive-time 3600 \
-    -F CF=on -F CF-version=1.7 -F file-upload=@/home/user/granule.nc -F response=html {{ homepage_url }}/check</pre>
-                  
+    -F CF=on -F CF-version=1.7 -F file-upload=@/home/user/granule.nc -F response=html \
+    -o result.html {{ homepage_url }}/check</pre>
+
+                  <h4>Saving PDF Output</h4>
+                  <pre>curl -L --progress-bar --connect-timeout 300 --max-time 3600 --keepalive-time 3600 \
+    -F GDS2=on -F GDS2-parameter=L4 -F file-upload=@/home/user/granule.nc -F response=pdf \
+    -o result.pdf {{ homepage_url }}/check</pre>
+
                   <h4>Options Explained</h4>
                   <ul>
+                    <li><code>-o &lt;filename&gt;</code>: Save the response body to the specified file</li>
                     <li><code>--progress-bar</code>: Display a simple progress bar</li>
                     <li><code>--progress-meter</code>: Display detailed progress information</li>
                     <li><code>-v</code>: Verbose output showing request and response headers</li>

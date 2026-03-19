@@ -85,7 +85,7 @@ resource "aws_ecs_task_definition" "fargate_task" {
     },
     {
       name  = "${local.ec2_resources_name}-proxy"
-      image = "ghcr.io/podaac/ngap-dit-proxy"
+      image = "ghcr.io/podaac/ngap-dit-proxy:1.1.0"
       essential = true
       environment = [
         {
