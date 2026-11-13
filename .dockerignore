@@ -1,0 +1,4 @@
+# Files kept in the repository but not part of the deployed image
+# (absent from the deployed 1.6.1 image).
+mcc/docs
+mcc/web/static/examples

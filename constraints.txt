@@ -1,0 +1,52 @@
+# Exact versions running in the deployed MCC 1.6.1 image (pip freeze, 2026-11-10).
+# Pins every package to what 1.6.1 runs today, so a clean build changes only the
+# packages deliberately updated in requirements*.txt.
+#
+# Intentionally NOT listed:
+#   pip, setuptools                                   - upgraded (Inspector findings)
+#   flask, werkzeug, requests, urllib3, certifi,
+#   idna, soupsieve, lxml                             - upgraded (Inspector findings)
+#   pre-commit, virtualenv, filelock, distlib, platformdirs,
+#   python-discovery, cfgv, identify, nodeenv         - removed (dev tool and its dependencies)
+antlr4-python3-runtime==4.7.2
+arrow==0.14.0
+bcrypt==5.0.0
+beautifulsoup4==4.14.3
+bz2file==0.98
+cachelib==0.13.0
+cf-units==3.0.0
+cftime==1.6.5
+charset-normalizer==3.4.6
+cheroot==11.1.2
+click==8.3.1
+compliance-checker==5.3.0
+Cython==3.0.2
+Flask-Session==0.8.0
+isodate==0.6.1
+itsdangerous==2.2.0
+jaraco.functools==4.4.0
+Jinja2==3.1.6
+MarkupSafe==3.0.3
+mod_wsgi==4.9.4
+more-itertools==10.8.0
+msgspec==0.20.0
+netCDF4==1.7.4
+numpy==1.23.5
+OWSLib==0.28.1
+packaging==26.0
+pdfkit==0.6.1
+pendulum==3.2.0
+pygeoif==1.6.0
+pypiserver==1.3.0
+pyproj==3.7.1
+python-dateutil==2.9.0.post0
+pytz==2026.1.post1
+PyYAML==6.0.3
+regex==2026.2.28
+shapely==2.1.2
+simple_http_server==0.22.3
+six==1.17.0
+typing_extensions==4.15.0
+tzdata==2025.3
+validators==0.35.0
+web.py==0.62

@@ -85,6 +85,8 @@ resource "aws_ecs_task_definition" "fargate_task" {
     },
     {
       name  = "${local.ec2_resources_name}-proxy"
+      # Pinned to the version the deployed 1.6.1 tasks run. Without a tag, every deploy (and every
+      # rollback) would pull whatever ":latest" is at the time.
       image = "ghcr.io/podaac/ngap-dit-proxy:1.1.0"
       essential = true
       environment = [
