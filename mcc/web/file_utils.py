@@ -10,6 +10,7 @@ import gzip
 import logging
 import os.path
 import tempfile
+import h5py
 from gzip import BadGzipFile
 from hashlib import md5
 from os.path import getsize
@@ -217,6 +218,12 @@ def get_dataset_from_file(uploaded_file):
 
         datafile = decompressed_file
 
+    # Call the external validation function
+    is_safe, reject_reason = validate_hdf5_security(datafile.name)
+    if not is_safe:
+        datafile.close()
+        return abort(400, f"Security validation failed for file {datafile_name}: {reject_reason}")
+
     try:
         return {
             'dataset': Dataset(datafile.name, 'r'),
@@ -244,3 +251,38 @@ def check_valid_filename(filename):
             500, f'File {filename} is not in an accepted data format. '
                  f'Must be one of .gz, .bz2, .nc, .h5, .nc4 or .hdf.'
         )
+
+def validate_hdf5_security(filepath):
+    """Recursively walks an HDF5 file to detect external links and storage without resolving them."""
+    try:
+        with h5py.File(filepath, 'r') as f:
+            def check_group(group):
+                for key in group.keys():
+                    # getlink=True fetches the link itself, preventing SSRF/File Read execution
+                    link = group.get(key, getlink=True)
+                    if isinstance(link, h5py.ExternalLink):
+                        return False, f"ExternalLink features are not permitted (found at '{key}')."
+
+                    # If safe, resolve the object to check for datasets or nested groups
+                    try:
+                        obj = group.get(key)
+                    except Exception:
+                        # Catch broken soft links or other internal structural errors
+                        continue 
+
+                    if isinstance(obj, h5py.Group):
+                        is_safe, msg = check_group(obj)
+                        if not is_safe:
+                            return is_safe, msg
+                    elif isinstance(obj, h5py.Dataset):
+                        # Check for H5D_EXTERNAL layout
+                        if obj.external is not None:
+                            return False, f"External dataset storage (H5D_EXTERNAL) is not permitted (found at '{key}')."
+                return True, ""
+            return check_group(f)
+    except OSError:
+        # If h5py cannot open the file, it is likely a netCDF3 (Classic) file.
+        # NetCDF3 does not support external HDF5 features, so it is safe to pass forward.
+        return True, ""
+    except Exception as e:
+        return False, f"Failed to validate internal file structure: {str(e)}"
