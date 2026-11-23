@@ -1,5 +1,12 @@
-# Pull base image.
-FROM rockylinux:8
+# MCC Dockerfile.
+# Originally reconstructed from the build history of the deployed 1.6.1 image
+# (podaac/mcc:1.6.1, sha256:ed1037e05fc297bc1727664a42685bcf32f26089ae25f7b438d9e02ab6039159),
+# whose Dockerfile was never committed; 1.6.2 applies the ECR vulnerability fixes on top.
+#
+# Base image: Rocky Linux 8.10 (the 1.6.1 image was built from Rocky 8.9).
+# Rocky's maintained images are published as rockylinux/rockylinux. If this tag is unavailable,
+# rockylinux:8.9 works too: the "dnf -y upgrade" below brings it to 8.10.
+FROM rockylinux/rockylinux:8.10
 
 # Specifies which defines.conf file is copied into the container,
 # set as required via "docker build --build-arg VENUE=[ops|uat|sit|dev|test] ..."
@@ -7,19 +14,27 @@ ARG VENUE=ops
 
 USER root
 
-# Install packages
-RUN dnf -y update --security \
+# Install dnf packages
+# Apply all available updates (not just --security): every OS finding in the 1.6.1
+# Inspector report is fixed by a published Rocky 8.10 update.
+# Not installed because MCC doesn't use them (each carried Inspector findings): git, tmux,
+# vim, emacs-nox, texlive, python3-mod_wsgi (built for Python 3.6; Apache loads the
+# Python 3.11 mod_wsgi installed by pip). vim-minimal, from the base image, is removed.
+# Optional ("weak") dependencies are not installed; they brought in Java (via jna).
+RUN echo "install_weak_deps=False" >> /etc/dnf/dnf.conf \
+    && dnf -y upgrade --refresh \
     && dnf -y install 'dnf-command(config-manager)' && dnf config-manager --set-enabled powertools \
     && dnf -y install epel-release \
-    && dnf -y install python3.11 python3.11-pip python3.11-devel python3.11-numpy python3-mod_wsgi \
-      gcc yum-utils git tmux vim emacs-nox net-tools httpd \
+    && dnf -y install python3.11 python3.11-pip python3.11-devel python3.11-numpy \
+      gcc yum-utils net-tools httpd \
       openssl-devel bzip2-devel libxml2-devel udunits2-devel libxslt-devel \
       httpd-devel libaec-devel netcdf-devel sqlite-devel \
       hdf5 hdf5-devel hdf5-static nbdkit-gzip-filter perl-PerlIO-gzip libtirpc-devel \
-      logrotate cronie patch Xvfb urw-fonts libXext udunits2-devel \
+      logrotate cronie patch urw-fonts libXext udunits2-devel \
     && dnf -y groupinstall "Development Tools" \
-    && dnf -y install texlive cairo-devel dejavu-sans-fonts \
+    && dnf -y install cairo-devel dejavu-sans-fonts \
     && dnf -y localinstall https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox-0.12.6.1-2.almalinux8.x86_64.rpm \
+    && if rpm -q vim-minimal >/dev/null; then dnf -y remove vim-minimal; fi \
     && dnf clean all
 
 # Install udunits
@@ -40,12 +55,31 @@ ENV UDUNITS2_LIBS=/usr/local/lib/:$UDUNITS2_LIBS
 ENV UDUNITS2_INCLUDE=/usr/local/lib:$UDUNITS2_INCLUDE
 
 # Install Python modules and mod_wsgi
-COPY --chmod=644 requirements.txt /tmp/
-COPY --chmod=644 requirements-checkers.txt /tmp/
-
-RUN pip3.11 install --upgrade pip \
-    && pip3.11 install -r /tmp/requirements.txt -r /tmp/requirements-checkers.txt mod_wsgi==4.9.4 \
+# - The requirements files are bind-mounted for this step only, so no copies are left in the
+#   image (Inspector also flagged the pins in the old /tmp/requirements*.txt copies).
+# - constraints.txt pins every other package to the version running in 1.6.1, so a clean
+#   build only changes the packages deliberately updated in requirements*.txt.
+# - "pip check" fails the build if the installed packages have conflicting requirements.
+RUN --mount=type=bind,source=requirements.txt,target=/tmp/build/requirements.txt \
+    --mount=type=bind,source=requirements-checkers.txt,target=/tmp/build/requirements-checkers.txt \
+    --mount=type=bind,source=constraints.txt,target=/tmp/build/constraints.txt \
+    pip3.11 install --upgrade pip \
+    && pip3.11 install -c /tmp/build/constraints.txt \
+         -r /tmp/build/requirements.txt -r /tmp/build/requirements-checkers.txt mod_wsgi==4.9.4 \
+    && pip3.11 check \
     && mod_wsgi-express install-module > /etc/httpd/conf.modules.d/02-wsgi.conf
+
+# Remove compilers and development packages now that the Python packages are built.
+# The compiled Python packages ship their own libraries; at runtime they need only base
+# system libraries plus udunits2 (for cf_units). Runtime packages are marked as explicitly
+# installed first, because dnf also removes packages that were only pulled in as
+# dependencies, and udunits2 was installed only as a dependency of udunits2-devel.
+RUN dnf mark install httpd python3.11 python3.11-libs python3.11-pip python3.11-numpy udunits2 wkhtmltox \
+    && dnf -y remove gcc python3.11-devel openssl-devel bzip2-devel libxml2-devel udunits2-devel \
+         libxslt-devel httpd-devel libaec-devel netcdf-devel sqlite-devel \
+         hdf5 hdf5-devel hdf5-static libtirpc-devel cairo-devel \
+    && dnf -y groupremove "Development Tools" \
+    && dnf clean all
 
 # This needs to be set to allow Apache/Python to write to the temp directory
 RUN usermod -u 1000 apache
@@ -75,18 +109,13 @@ RUN echo "Include /home/mcc/defines.conf" >> /etc/httpd/conf/httpd.conf \
     && echo '    Header always edit Set-Cookie (.*) "$1; HttpOnly; Secure."' >> /etc/httpd/conf/httpd.conf \
     && echo '</IfModule>' >> /etc/httpd/conf/httpd.conf
 
-ENV PATH "$PATH:/var/www/html/mcc"
-ENV PATH "$PATH:/var/www/html/mcc/web"
-ENV PYTHONPATH "${PYTHONPATH}:/var/www/html/mcc"
-ENV PYTHONPATH "${PYTHONPATH}:/var/www/html/mcc/web"
+ENV PATH="$PATH:/var/www/html/mcc"
+ENV PATH="$PATH:/var/www/html/mcc/web"
+ENV PYTHONPATH="${PYTHONPATH}:/var/www/html/mcc"
+ENV PYTHONPATH="${PYTHONPATH}:/var/www/html/mcc/web"
 
-# Setup wkhtmltopdf stuff
-RUN echo -e '#!/bin/bash\nxvfb-run -a --server-args="-screen 0, 1024x768x24" /usr/local/bin/wkhtmltopdf -q $*' > /usr/local/bin/wkhtmltopdf.sh \
-    && chmod a+x /usr/local/bin/wkhtmltopdf.sh \
-    && ln -s /usr/local/bin/wkhtmltopdf.sh /home/mcc/bin/wkhtmltopdf
-
-# Make sure the wkhtmltopdf wrapper gets precedence in the path
-ENV PATH "/home/mcc/bin:$PATH"
+# wkhtmltopdf: no xvfb-run wrapper. The wkhtmltox build ("with patched qt") renders
+# without an X server, and MCC calls /usr/local/bin/wkhtmltopdf directly (server.py).
 
 # Link apache config to container logs
 RUN ln -sf /proc/self/fd/1 /var/log/httpd/error_log

@@ -21,7 +21,12 @@ from checker.cf_shim import CF
 from checker.gds2 import GDS2
 from .file_utils import format_byte_size, get_dataset_from_file
 from .form_utils import parse_post_arguments
-from .json_utils import CustomJSONEncoder
+from .json_utils import CustomJSONProvider
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, 
+                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, 
@@ -34,8 +39,11 @@ app = Flask(__name__)
 app.jinja_env.trim_blocks = True
 app.jinja_env.lstrip_blocks = True
 
-# The JSON encoder in use when we call flask.jsonify()
-app.json_encoder = CustomJSONEncoder
+# The JSON provider in use when we call flask.jsonify()
+app.json = CustomJSONProvider(app)
+
+# Location of the wkhtmltopdf binary used for PDF reports (installed by the wkhtmltox RPM).
+WKHTMLTOPDF_PATH = environ.get('WKHTMLTOPDF_PATH', '/usr/local/bin/wkhtmltopdf')
 
 # Maximum allowed file size when submitting directly to service via API.
 app.config['MAX_CONTENT_LENGTH'] = int(environ['ApiMaxFileSize'])
@@ -261,11 +269,19 @@ def check():
                 'margin-right': '0.5in',
                 'margin-bottom': '0.5in',
                 'margin-left': '0.5in',
-                'enable-local-file-access': None,
+                # Mitigations for CVE-2025-26240 (pdfkit, no upstream fix): the report
+                # template needs neither JavaScript nor local files (its stylesheet is
+                # fetched over HTTPS from HomepageURL), so both are switched off.
+                'disable-local-file-access': None,
+                'disable-javascript': None,
                 'quiet': ''
             }
 
-            pdf = pdfkit.from_string(html, False, options=options)
+            # Call wkhtmltopdf by absolute path: the installed build (0.12.6.1 "with patched
+            # qt") renders without an X server, so no xvfb-run wrapper is needed, and pdfkit
+            # no longer depends on the `which` command to locate the binary.
+            config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
+            pdf = pdfkit.from_string(html, False, options=options, configuration=config)
 
             response = make_response(pdf)
             response.headers["Content-Disposition"] = f'attachment;filename={ds["filename"]}_metadata_compliance_report.pdf'

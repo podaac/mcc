@@ -60,6 +60,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **PODAAC-5680**
   - Updated Terraform scripts to include the ngap-dit-proxy container within the Fargate deployment
 
+## [v1.6.2]
+Remediates the 285 Amazon Inspector findings reported against the `podaac/mcc:1.6.1` image.
+### Changed
+- Upgraded Flask 2.2.5 → 3.1.3; the custom JSON encoder is now a Flask JSON provider (same JSON output)
+- PDF reports call `/usr/local/bin/wkhtmltopdf` directly (overridable with `WKHTMLTOPDF_PATH`); the `xvfb-run` wrapper is gone
+- Image built from Rocky Linux 8.10 with all OS updates applied (`dnf -y upgrade`, was `--security` only)
+- Python packages pinned to the 1.6.1 versions via `constraints.txt`, except the upgrades listed under Security
+- Requirements files are bind-mounted during the build instead of being copied into `/tmp`
+- SIT and UAT defines updated to the setting names introduced in 1.6.1
+- Jenkins image build uses `--pull --no-cache`
+### Removed
+- From the image: Xvfb, git, tmux, vim, emacs, texlive, python3-mod_wsgi (Python 3.6), compilers and
+  development packages (after the Python build), optional ("weak") dnf dependencies such as Java
+- `pre-commit` (and its dependencies virtualenv and filelock) from the runtime requirements
+### Security
+- Python: werkzeug >= 3.1.9, requests >= 2.33.0, urllib3 >= 2.8.0, setuptools >= 84.1.0, certifi >= 2026.10.18,
+  idna >= 3.15, soupsieve >= 2.9.0, lxml >= 6.1.0, pip >= 26.2
+- CVE-2025-26240 (pdfkit, no upstream fix): PDF rendering now runs with JavaScript and local file access disabled
+
+## [v1.6.1] - 2026-03-24
+_Reconstructed from the deployed image (`podaac/mcc:1.6.1`, sha256:ed1037e0…). The original 1.6.1 source was never committed;
+entries below are inferred by comparing the deployed image with `develop`._
+### Added
+- `/about` page
+- CF 1.8 and CF 1.9 checks (compliance-checker 5.3.0)
+- Bundled CF Standard Name Table v90, selectable via the `CF_STANDARD_NAME_TABLE` setting (`cfStandardNameTable` define)
+- Separate upload size limits for the REST API (`ApiMaxFileSize`) and the web UI (`UiMaxFileSize`)
+### Changed
+- Base image moved from CentOS 7 / Python 3.8 to Rocky Linux 8 / Python 3.11; wkhtmltopdf 0.12.6.1 (wkhtmltox package)
+- compliance-checker 5.3.0, netCDF4 >= 1.6.4, pyproj 3.7.1
+- The 413 (upload too large) handler always returns JSON
+- MCC's patched `pythonlibs/suite.py` is no longer installed; compliance-checker's own `suite.py` is used
+
 ## [v1.5.0]
 ### Added
 ### Changed
