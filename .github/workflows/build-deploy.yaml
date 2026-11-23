@@ -71,35 +71,51 @@ jobs:
           --package-manager=pip
           --skip-unresolved
 
-    - name: Run Snyk test on requirements.txt
-      uses: snyk/actions/python@master
-      env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      with:
-        command: test
-        args: >
-            --org=${{ secrets.SNYK_ORG_ID }}
-            --project-name=${{ github.repository }}
-            --file=requirements.txt
-            --package-manager=pip
-            --severity-threshold=high
-            --skip-unresolved
-            --fail-on=all
+    - name: Install system dependencies for Python packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libnetcdf-dev libhdf5-dev libxml2-dev libxslt1-dev apache2-dev libudunits2-dev
 
-    - name: Run Snyk test on requirements-checkers.txt
-      uses: snyk/actions/python@master
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11' # Update this to match your project's Python version
+        cache: 'pip'
+
+    - name: Install Python dependencies
+      run: pip install -r requirements.txt
+
+    - name: Set up Snyk CLI
+      uses: snyk/actions/setup@master
+
+    - name: Run Snyk test on requirements.txt
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      with:
-        command: test
-        args: >
-          --org=${{ secrets.SNYK_ORG_ID }}
-          --project-name=${{ github.repository }}
-          --file=requirements-checkers.txt
-          --package-manager=pip
-          --severity-threshold=high
-          --skip-unresolved
-          --fail-on=all
+      run: >
+        snyk test 
+        --org=${{ secrets.SNYK_ORG_ID }} 
+        --project-name=${{ github.repository }} 
+        --file=requirements.txt 
+        --package-manager=pip 
+        --severity-threshold=high 
+        --skip-unresolved 
+        --fail-on=all
+
+    - name: Install checker Python dependencies
+      run: pip install -r requirements-checkers.txt
+
+    - name: Run Snyk test on requirements-checkers.txt
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      run: >
+        snyk test 
+        --org=${{ secrets.SNYK_ORG_ID }} 
+        --project-name=${{ github.repository }} 
+        --file=requirements-checkers.txt 
+        --package-manager=pip 
+        --severity-threshold=high 
+        --skip-unresolved 
+        --fail-on=all
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
